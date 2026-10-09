@@ -1,0 +1,48 @@
+{
+  "name": "chico_rei_store",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w @chico_rei_store/api\" \"npm run dev -w @chico_rei_store/web\"",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:e2e": "npm run test:e2e -w @chico_rei_store/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "scrape": "npm run start -w @chico_rei_store/scraper",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,vue,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss}": "prettier --write"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^9.33.0",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.9",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^2.1.9",
+    "vue-eslint-parser": "^9.4.3"
+  }
+}
