@@ -106,7 +106,7 @@ describe('CatalogView', () => {
     const { wrapper, router } = await mountView('/?page=2')
     await settle()
 
-    await wrapper.find('[data-test="type-camiseta"]').trigger('change')
+    await wrapper.find('[data-test="type-camiseta"]').trigger('click')
     await settle()
 
     expect(router.currentRoute.query).toEqual({ type: 'camiseta' })
@@ -137,5 +137,37 @@ describe('CatalogView', () => {
 
     expect(router.currentRoute.query).toEqual({ page: '3' })
     expect(wrapper.find('[data-test="page-status"]').text()).toBe('Página 3 de 3')
+  })
+
+  it('na primeira página o título da vitrine é o h1; nas outras, o título dos resultados', async () => {
+    const first = await mountView('/')
+    await settle()
+    expect(first.wrapper.find('h1').attributes('id')).toBe('hero-title')
+
+    const second = await mountView('/?page=2')
+    await settle()
+    expect(second.wrapper.find('#hero-title').exists()).toBe(false)
+    expect(second.wrapper.find('h1').attributes('id')).toBe('results-title')
+  })
+
+  it('mostra os filtros ativos como etiquetas que removem o filtro ao clicar', async () => {
+    const { wrapper, router } = await mountView('/?type=camiseta&color=preto')
+    await settle()
+
+    const chip = wrapper.find('[aria-label="Remover filtro Preto"]')
+    expect(chip.exists()).toBe(true)
+    await chip.trigger('click')
+
+    expect(router.currentRoute.query).toEqual({ type: 'camiseta' })
+  })
+
+  it('no mobile, o botão "Filtros" abre o painel em formato de folha', async () => {
+    const { wrapper } = await mountView()
+    await settle()
+    expect(wrapper.find('[data-test="filter-sheet"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="toggle-filters"]').trigger('click')
+
+    expect(wrapper.find('[data-test="filter-sheet"]').exists()).toBe(true)
   })
 })

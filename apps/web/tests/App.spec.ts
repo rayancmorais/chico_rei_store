@@ -35,7 +35,7 @@ describe('App', () => {
     const wrapper = mount(App, { localVue, pinia, router, attachTo: document.body })
 
     const button = wrapper.find('[data-test="open-cart"]')
-    expect(button.text()).toBe('Carrinho (2)')
+    expect(button.find('[data-test="cart-count"]').text()).toBe('2')
     expect(button.attributes('aria-label')).toBe('Abrir carrinho, 2 itens')
 
     await button.trigger('click')

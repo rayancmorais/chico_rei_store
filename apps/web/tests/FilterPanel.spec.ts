@@ -4,55 +4,78 @@ import type { ComponentOptions } from 'vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import { filtersResponse } from './factories'
 
-function mountPanel(selected: { types?: string[]; colors?: string[] } = {}) {
+const manyColors = Array.from({ length: 10 }, (_, index) => ({
+  id: `cor-${index}`,
+  name: `Cor ${index}`,
+  hex: '#000000',
+  count: 1,
+}))
+
+function mountPanel(
+  selected: { types?: string[]; colors?: string[] } = {},
+  filters = filtersResponse(),
+) {
   // Os tipos do test-utils 1 não reconhecem componentes de <script setup> com props tipadas.
   return mount(FilterPanel as ComponentOptions<Vue>, {
     propsData: {
-      filters: filtersResponse(),
+      filters,
       selectedTypes: selected.types ?? [],
       selectedColors: selected.colors ?? [],
+      sort: 'relevance',
     },
   })
 }
 
-const checkbox = (wrapper: ReturnType<typeof mountPanel>, testId: string) =>
-  wrapper.find(`[data-test="${testId}"]`).element as HTMLInputElement
+const button = (wrapper: ReturnType<typeof mountPanel>, testId: string) =>
+  wrapper.find(`[data-test="${testId}"]`)
 
 describe('FilterPanel', () => {
-  it('mostra cada opção com a contagem de produtos', () => {
+  it('mostra cada tipo com a contagem e "Tudo" com a soma', () => {
     const wrapper = mountPanel()
-    expect(wrapper.text()).toContain('Camiseta')
-    expect(wrapper.text()).toContain('Preto')
-    expect(
-      wrapper.find('[data-test="type-camiseta"]').element.closest('label')?.textContent,
-    ).toContain('3')
+    expect(button(wrapper, 'type-camiseta').text()).toContain('Camiseta')
+    expect(button(wrapper, 'type-camiseta').text()).toContain('3')
+    expect(button(wrapper, 'all-types').text()).toContain('3')
   })
 
-  it('marca as opções que vieram selecionadas', () => {
+  it('marca como pressionadas as opções que vieram selecionadas', () => {
     const wrapper = mountPanel({ types: ['camiseta'], colors: ['branco'] })
-    expect(checkbox(wrapper, 'type-camiseta').checked).toBe(true)
-    expect(checkbox(wrapper, 'color-branco').checked).toBe(true)
-    expect(checkbox(wrapper, 'color-preto').checked).toBe(false)
+    expect(button(wrapper, 'type-camiseta').attributes('aria-pressed')).toBe('true')
+    expect(button(wrapper, 'all-types').attributes('aria-pressed')).toBe('false')
+    expect(button(wrapper, 'color-branco').attributes('aria-pressed')).toBe('true')
+    expect(button(wrapper, 'color-preto').attributes('aria-pressed')).toBe('false')
   })
 
   it('avisa o pai quando uma opção é clicada', async () => {
-    const wrapper = mountPanel()
-    await wrapper.find('[data-test="type-camiseta"]').trigger('change')
-    await wrapper.find('[data-test="color-preto"]').trigger('change')
+    const wrapper = mountPanel({ types: ['camiseta'] })
+    await button(wrapper, 'type-camiseta').trigger('click')
+    await button(wrapper, 'color-preto').trigger('click')
+    await button(wrapper, 'all-types').trigger('click')
+    await wrapper.find('[data-test="sort-price_asc"]').trigger('change')
+
     expect(wrapper.emitted('toggle-type')).toEqual([['camiseta']])
     expect(wrapper.emitted('toggle-color')).toEqual([['preto']])
+    expect(wrapper.emitted('clear-types')).toHaveLength(1)
+    expect(wrapper.emitted('change-sort')).toEqual([['price_asc']])
   })
 
   it('desabilita a opção sem resultados, mas não se ela já estiver marcada', () => {
-    expect(checkbox(mountPanel(), 'type-caneca').disabled).toBe(true)
-    expect(checkbox(mountPanel({ types: ['caneca'] }), 'type-caneca').disabled).toBe(false)
+    expect(button(mountPanel(), 'type-caneca').attributes('disabled')).toBeDefined()
+    expect(
+      button(mountPanel({ types: ['caneca'] }), 'type-caneca').attributes('disabled'),
+    ).toBeUndefined()
   })
 
-  it('só oferece "Limpar filtros" quando há algo selecionado', async () => {
-    expect(mountPanel().find('[data-test="clear-filters"]').exists()).toBe(false)
+  it('mostra 8 cores e guarda o resto atrás de "+ N cores"', async () => {
+    const wrapper = mountPanel({}, filtersResponse({ colors: manyColors }))
+    expect(wrapper.findAll('[data-test^="color-cor-"]')).toHaveLength(8)
 
-    const wrapper = mountPanel({ colors: ['preto'] })
-    await wrapper.find('[data-test="clear-filters"]').trigger('click')
-    expect(wrapper.emitted('clear')).toHaveLength(1)
+    await button(wrapper, 'more-colors').trigger('click')
+
+    expect(wrapper.findAll('[data-test^="color-cor-"]')).toHaveLength(10)
+    expect(button(wrapper, 'more-colors').exists()).toBe(false)
+  })
+
+  it('dá às bolinhas de cor um nome com a contagem, para o leitor de tela', () => {
+    expect(button(mountPanel(), 'color-preto').attributes('aria-label')).toBe('Preto, 2 produtos')
   })
 })
