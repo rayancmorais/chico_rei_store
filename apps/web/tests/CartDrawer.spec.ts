@@ -52,6 +52,8 @@ describe('CartDrawer', () => {
     const variants = wrapper.findAll('[data-test="item-variant"]').wrappers.map((w) => w.text())
     expect(variants).toEqual(['Preto · Tamanho M', 'Branco · Tamanho G', 'Branco'])
     expect(wrapper.find('[data-test="cart-subtotal"]').text()).toMatch(/R\$\s209,70/)
+    // A bolinha é aria-hidden; o leitor de tela ouve "Carrinho, 3 itens" pelo texto escondido.
+    expect(wrapper.find('#cart-title .sr-only').text()).toBe(', 3 itens')
   })
 
   it('aumentar a quantidade atualiza o total do item e o subtotal na hora', async () => {
@@ -81,6 +83,14 @@ describe('CartDrawer', () => {
 
     expect(cart.items.map((item) => item.name)).toEqual(['Caneca'])
     expect(document.activeElement).toBe(wrapper.find('[data-test="close-cart"]').element)
+  })
+
+  it('"Continuar comprando" fecha o carrinho', async () => {
+    const { wrapper, cart } = await mountDrawer((store) =>
+      store.add(camiseta, { color: preto, size: 'M' }),
+    )
+    await wrapper.find('[data-test="keep-shopping"]').trigger('click')
+    expect(cart.isOpen).toBe(false)
   })
 
   it('ao abrir, coloca o foco no botão de fechar', async () => {
