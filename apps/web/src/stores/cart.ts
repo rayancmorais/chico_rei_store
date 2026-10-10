@@ -12,12 +12,17 @@ export interface CartItem {
   quantity: number
 }
 
+const NO_SIZE = 'unico'
+
+const variantKey = (productId: string, colorId: string, size: string | null) =>
+  `${productId}::${colorId}::${size ?? NO_SIZE}`
+
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([])
 
-  const itemCount = computed(() => items.value.reduce((n, i) => n + i.quantity, 0))
+  const itemCount = computed(() => items.value.reduce((count, item) => count + item.quantity, 0))
   const subtotalCents = computed(() =>
-    items.value.reduce((sum, i) => sum + i.unitPriceCents * i.quantity, 0),
+    items.value.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0),
   )
 
   function add(
@@ -25,8 +30,8 @@ export const useCartStore = defineStore('cart', () => {
     variant: { color: Color; size: string | null },
     quantity = 1,
   ) {
-    const key = `${product.id}::${variant.color.id}::${variant.size ?? 'unico'}`
-    const existing = items.value.find((i) => i.key === key)
+    const key = variantKey(product.id, variant.color.id, variant.size)
+    const existing = items.value.find((item) => item.key === key)
     if (existing) {
       existing.quantity += quantity
       return
