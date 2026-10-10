@@ -182,16 +182,13 @@ onBeforeUnmount(() => controller?.abort())
         <FeedbackState
           v-else-if="status === 'error'"
           role="alert"
-          title="Não conseguimos carregar os produtos"
-          description="Verifique sua conexão e tente de novo."
+          seal="XIII!"
+          seal-tone="accent"
+          title="Não conseguimos carregar a vitrine."
+          description="Pode ser a conexão. Seus filtros continuam salvos."
           data-test="error"
         >
-          <button
-            type="button"
-            class="rounded-full bg-stone-900 px-6 py-2 text-sm font-medium text-white hover:bg-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
-            data-test="retry"
-            @click="load"
-          >
+          <button type="button" class="btn-hq-accent" data-test="retry" @click="load">
             Tentar de novo
           </button>
         </FeedbackState>
@@ -199,14 +196,21 @@ onBeforeUnmount(() => controller?.abort())
         <FeedbackState
           v-else-if="products.length === 0"
           role="status"
-          title="Nenhum produto encontrado"
-          :description="activeFilterCount ? 'Tente remover algum filtro.' : undefined"
+          seal="OPA!"
+          :title="
+            activeFilterCount
+              ? 'Nenhuma estampa com essa combinação.'
+              : 'Nenhum produto encontrado.'
+          "
+          :description="
+            activeFilterCount ? 'Tente tirar um filtro ou escolher outra cor.' : undefined
+          "
           data-test="empty"
         >
           <button
             v-if="activeFilterCount"
             type="button"
-            class="rounded-full bg-stone-900 px-6 py-2 text-sm font-medium text-white hover:bg-stone-700"
+            class="btn-hq-accent"
             data-test="empty-clear-filters"
             @click="clearFilters"
           >

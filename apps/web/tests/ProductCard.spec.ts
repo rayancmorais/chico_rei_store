@@ -43,3 +43,14 @@ describe('ProductCard', () => {
     expect(wrapper.text()).toContain('Disponível em 7 cores')
   })
 })
+
+describe('ProductCard: recorte de detalhe', () => {
+  it('só carrega o recorte depois que o mouse passa pelo card', async () => {
+    const wrapper = mountCard()
+    expect(wrapper.find('[data-test="detail-image"]').exists()).toBe(false)
+
+    await wrapper.trigger('mouseenter')
+
+    expect(wrapper.find('[data-test="detail-image"]').attributes('src')).toContain('fp-z=2.2')
+  })
+})

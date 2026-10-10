@@ -114,31 +114,24 @@ onBeforeUnmount(() => controller?.abort())
     <FeedbackState
       v-else-if="status === 'not-found'"
       role="status"
-      title="Produto não encontrado"
-      description="Ele pode ter saído da loja ou o link está incorreto."
+      seal="ZZZ…"
+      title="Produto não encontrado."
+      description="Essa estampa saiu de linha ou o link está errado. Que tal ver o que está na vitrine?"
       data-test="not-found"
     >
-      <router-link
-        :to="{ name: 'catalog' }"
-        class="inline-block rounded-full bg-stone-900 px-6 py-2 text-sm font-medium text-white hover:bg-stone-700"
-      >
-        Ver todos os produtos
-      </router-link>
+      <router-link :to="{ name: 'catalog' }" class="btn-hq-accent">Voltar para a loja</router-link>
     </FeedbackState>
 
     <FeedbackState
       v-else-if="status === 'error'"
       role="alert"
-      title="Não conseguimos carregar o produto"
-      description="Verifique sua conexão e tente de novo."
+      seal="XIII!"
+      seal-tone="accent"
+      title="Não conseguimos carregar o produto."
+      description="Pode ser a conexão. Tente de novo em instantes."
       data-test="error"
     >
-      <button
-        type="button"
-        class="rounded-full bg-stone-900 px-6 py-2 text-sm font-medium text-white hover:bg-stone-700"
-        data-test="retry"
-        @click="load"
-      >
+      <button type="button" class="btn-hq-accent" data-test="retry" @click="load">
         Tentar de novo
       </button>
     </FeedbackState>
