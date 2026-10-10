@@ -12,17 +12,34 @@ const emit = defineEmits<{ (event: 'shop'): void }>()
 
 const HIGHLIGHTS = ['Artistas independentes', 'Impresso sob demanda', 'Vitrine de umapenca.com']
 
-// Cada quadro tem uma onomatopeia, uma inclinação no hover e um atraso de entrada próprios.
+// Cada quadro tem um selo, uma inclinação no hover e um atraso de entrada próprios. O selo do
+// quadro grande fica sempre visível e diz algo verdadeiro sobre todas as peças (o protótipo
+// dizia "Mais vendida", mas a API não tem dado de vendas); os outros aparecem só no hover.
 const FRAMES = [
   {
-    word: 'POW!',
+    word: 'Arte autoral',
     tone: 'mustard',
+    alwaysVisible: true,
     tilt: 'group-hover:-rotate-1',
     delay: '100ms',
     area: 'row-span-2',
   },
-  { word: 'ZAP!', tone: 'accent', tilt: 'group-hover:rotate-[1.5deg]', delay: '250ms', area: '' },
-  { word: 'UAU!', tone: 'mustard', tilt: 'group-hover:-rotate-[1.5deg]', delay: '400ms', area: '' },
+  {
+    word: 'ZAP!',
+    tone: 'accent',
+    alwaysVisible: false,
+    tilt: 'group-hover:rotate-[1.5deg]',
+    delay: '250ms',
+    area: '',
+  },
+  {
+    word: 'UAU!',
+    tone: 'mustard',
+    alwaysVisible: false,
+    tilt: 'group-hover:-rotate-[1.5deg]',
+    delay: '400ms',
+    area: '',
+  },
 ] as const
 
 const frames = computed(() =>
@@ -100,8 +117,14 @@ const frames = computed(() =>
               v-if="frame.product"
               :label="frame.word"
               :tone="frame.tone"
-              size="sm"
-              class="pointer-events-none absolute -right-4 -top-6 z-10 opacity-0 transition-opacity group-hover:opacity-100 motion-safe:group-hover:animate-zap"
+              :size="frame.alwaysVisible ? 'md' : 'sm'"
+              class="pointer-events-none absolute z-10"
+              :class="
+                frame.alwaysVisible
+                  ? '-right-5 -top-7 -rotate-[12deg] motion-safe:animate-stamp'
+                  : '-right-4 -top-6 opacity-0 transition-opacity group-hover:opacity-100 motion-safe:group-hover:animate-zap'
+              "
+              data-test="hero-seal"
             />
           </div>
         </div>

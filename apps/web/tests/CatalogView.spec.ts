@@ -150,6 +150,15 @@ describe('CatalogView', () => {
     expect(second.wrapper.find('h1').attributes('id')).toBe('results-title')
   })
 
+  it('o quadro principal da vitrine tem um selo fixo, sem prometer o que a API não sabe', async () => {
+    const { wrapper } = await mountView('/')
+    await settle()
+    const seals = wrapper.findAll('[data-test="hero-seal"]')
+    // A API padrão do teste devolve um produto: só o primeiro quadro ganha produto e selo.
+    expect(seals).toHaveLength(1)
+    expect(seals.at(0).text()).toBe('Arte autoral')
+  })
+
   it('mostra os filtros ativos como etiquetas que removem o filtro ao clicar', async () => {
     const { wrapper, router } = await mountView('/?type=camiseta&color=preto')
     await settle()
