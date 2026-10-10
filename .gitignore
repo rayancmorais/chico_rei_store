@@ -5,3 +5,4 @@ data/raw
 coverage
 playwright-report
 test-results
+.vercel
