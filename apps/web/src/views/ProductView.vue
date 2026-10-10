@@ -4,10 +4,12 @@ import axios from 'axios'
 import type { Product } from '@chico_rei_store/shared'
 import { fetchProduct } from '@/services/api'
 import { useCartStore } from '@/stores/cart'
+import { useLatestRequest } from '@/composables/useLatestRequest'
 import { formatPrice } from '@/utils/format'
 import BurstSeal from '@/components/BurstSeal.vue'
 import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
+import PriceTag from '@/components/PriceTag.vue'
 import ProductGallery from '@/components/ProductGallery.vue'
 import RelatedProducts from '@/components/RelatedProducts.vue'
 import SizeSelector from '@/components/SizeSelector.vue'
@@ -55,14 +57,11 @@ const highlight = computed(() => ({
   size: triedToAdd.value && sizePending.value,
 }))
 
-let controller: AbortController | null = null
+const request = useLatestRequest()
 let shakeTimer: ReturnType<typeof setTimeout> | undefined
 
 async function load() {
-  controller?.abort()
-  const current = new AbortController()
-  controller = current
-
+  const signal = request.start()
   status.value = 'loading'
   product.value = null
   selectedColorId.value = null
@@ -71,7 +70,7 @@ async function load() {
   triedToAdd.value = false
 
   try {
-    const data = await fetchProduct(props.id, current.signal)
+    const data = await fetchProduct(props.id, signal)
     product.value = data
     // Com uma opção só não há escolha a fazer; pedir o clique seria um passo inútil.
     if (data.colors.length === 1) selectedColorId.value = data.colors[0]!.id
@@ -121,10 +120,7 @@ watch(() => props.id, load, { immediate: true })
 watch([selectedColorId, selectedSize], () => {
   justAdded.value = false
 })
-onBeforeUnmount(() => {
-  controller?.abort()
-  clearTimeout(shakeTimer)
-})
+onBeforeUnmount(() => clearTimeout(shakeTimer))
 </script>
 
 <template>
@@ -226,18 +222,7 @@ onBeforeUnmount(() => {
               >
                 {{ product.name }}
               </h1>
-              <p class="flex flex-wrap items-baseline gap-x-3" data-test="price">
-                <span
-                  v-if="product.originalPriceCents !== null"
-                  class="text-lg text-muted line-through"
-                >
-                  <span class="sr-only">De</span> {{ formatPrice(product.originalPriceCents) }}
-                </span>
-                <span class="text-[30px] font-bold tracking-[-0.02em]">
-                  <span v-if="product.originalPriceCents !== null" class="sr-only">por</span>
-                  {{ formatPrice(product.priceCents) }}
-                </span>
-              </p>
+              <PriceTag :product="product" size="lg" />
             </div>
 
             <ColorSelector

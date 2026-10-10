@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import type { ProductSummary } from '@chico_rei_store/shared'
 import { fetchProducts } from '@/services/api'
+import { useLatestRequest } from '@/composables/useLatestRequest'
 import ProductCard from '@/components/ProductCard.vue'
 
 const props = defineProps<{ productId: string; typeId: string }>()
@@ -9,17 +10,15 @@ const props = defineProps<{ productId: string; typeId: string }>()
 const LIMIT = 4
 
 const products = ref<ProductSummary[]>([])
-let controller: AbortController | null = null
+const request = useLatestRequest()
 
 async function load() {
-  controller?.abort()
-  const current = new AbortController()
-  controller = current
+  const signal = request.start()
   products.value = []
 
   try {
     // Pede um a mais porque o produto aberto pode vir na lista e é descartado.
-    const { data } = await fetchProducts({ type: [props.typeId], limit: LIMIT + 1 }, current.signal)
+    const { data } = await fetchProducts({ type: [props.typeId], limit: LIMIT + 1 }, signal)
     products.value = data.filter((item) => item.id !== props.productId).slice(0, LIMIT)
   } catch {
     // Seção complementar: se falhar, some em silêncio em vez de competir com o erro principal.
@@ -28,7 +27,6 @@ async function load() {
 }
 
 watch(() => props.productId, load, { immediate: true })
-onBeforeUnmount(() => controller?.abort())
 </script>
 
 <template>

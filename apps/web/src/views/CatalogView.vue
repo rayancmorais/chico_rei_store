@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router/composables'
 import { isNavigationFailure, NavigationFailureType } from 'vue-router'
 import axios from 'axios'
 import type { FiltersResponse, ProductSort, ProductSummary } from '@chico_rei_store/shared'
 import { fetchFilters, fetchProducts } from '@/services/api'
+import { useLatestRequest } from '@/composables/useLatestRequest'
+import { pluralize, pluralTypeLabel } from '@/utils/format'
 import {
   parseCatalogQuery,
   toggleItem,
@@ -50,7 +52,7 @@ const resultTitle = computed(() => {
   if (selected.length === 0) return 'Todas as peças'
   if (selected.length > 1) return 'Seleção'
   const label = filters.value?.types.find((type) => type.id === selected[0])?.label ?? 'Seleção'
-  return /[ao]$/.test(label) ? `${label}s` : label
+  return pluralTypeLabel(label)
 })
 
 const activeChips = computed(() => {
@@ -75,22 +77,17 @@ const activeChips = computed(() => {
   ]
 })
 
-let controller: AbortController | null = null
+const request = useLatestRequest()
 
 async function load() {
-  // Cancela a busca anterior: se o usuário marcar dois filtros seguidos, a resposta mais lenta
-  // não pode chegar depois e sobrescrever a mais nova.
-  controller?.abort()
-  const current = new AbortController()
-  controller = current
-
+  const signal = request.start()
   status.value = 'loading'
   const { type, color, page, sort } = query.value
 
   try {
     const [list, facets] = await Promise.all([
-      fetchProducts({ type, color, page, sort }, current.signal),
-      fetchFilters({ type, color }, current.signal),
+      fetchProducts({ type, color, page, sort }, signal),
+      fetchFilters({ type, color }, signal),
     ])
 
     if (list.data.length === 0 && page > list.meta.totalPages && list.meta.totalPages > 0) {
@@ -150,7 +147,6 @@ async function shopShirts() {
 }
 
 watch(query, load, { immediate: true })
-onBeforeUnmount(() => controller?.abort())
 </script>
 
 <template>
@@ -219,7 +215,7 @@ onBeforeUnmount(() => controller?.abort())
           </component>
           <p class="min-h-[1.25rem] text-sm text-muted" data-test="result-count">
             <template v-if="status === 'success'">
-              {{ total }} {{ total === 1 ? 'produto' : 'produtos' }}
+              {{ pluralize(total, 'produto', 'produtos') }}
             </template>
           </p>
         </div>
