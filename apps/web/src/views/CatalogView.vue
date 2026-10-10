@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router/composables'
 import { isNavigationFailure, NavigationFailureType } from 'vue-router'
 import axios from 'axios'
@@ -11,22 +11,19 @@ import {
   toRouteQuery,
   type CatalogQuery,
 } from '@/utils/catalog-query'
+import CatalogHero from '@/components/CatalogHero.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import ProductCardSkeleton from '@/components/ProductCardSkeleton.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
+import FilterChip from '@/components/FilterChip.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import FilterSheet from '@/components/FilterSheet.vue'
 import PaginationNav from '@/components/PaginationNav.vue'
 
 // Um status só, em vez de booleans soltos, para "carregando e com erro" ser impossível.
 type Status = 'loading' | 'success' | 'error'
 
 const SKELETON_COUNT = 6
-
-const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
-  { value: 'relevance', label: 'Relevância' },
-  { value: 'price_asc', label: 'Menor preço' },
-  { value: 'price_desc', label: 'Maior preço' },
-]
 
 const route = useRoute()
 const router = useRouter()
@@ -40,10 +37,43 @@ const products = ref<ProductSummary[]>([])
 const filters = ref<FiltersResponse | null>(null)
 const total = ref(0)
 const totalPages = ref(0)
-const showFilters = ref(false)
+const pageSize = ref(0)
+const showFilterSheet = ref(false)
+const results = ref<HTMLElement | null>(null)
 
 const activeFilterCount = computed(() => query.value.type.length + query.value.color.length)
 const isRefreshing = computed(() => status.value === 'loading' && products.value.length > 0)
+const showHero = computed(() => query.value.page === 1)
+
+const resultTitle = computed(() => {
+  const selected = query.value.type
+  if (selected.length === 0) return 'Todas as peças'
+  if (selected.length > 1) return 'Seleção'
+  const label = filters.value?.types.find((type) => type.id === selected[0])?.label ?? 'Seleção'
+  return /[ao]$/.test(label) ? `${label}s` : label
+})
+
+const activeChips = computed(() => {
+  const types = filters.value?.types ?? []
+  const colors = filters.value?.colors ?? []
+  return [
+    ...query.value.type.map((id) => ({
+      key: `type-${id}`,
+      label: types.find((type) => type.id === id)?.label ?? id,
+      hex: null,
+      remove: () => toggleType(id),
+    })),
+    ...query.value.color.map((id) => {
+      const color = colors.find((option) => option.id === id)
+      return {
+        key: `color-${id}`,
+        label: color?.name ?? id,
+        hex: color?.hex ?? null,
+        remove: () => toggleColor(id),
+      }
+    }),
+  ]
+})
 
 let controller: AbortController | null = null
 
@@ -71,6 +101,7 @@ async function load() {
     products.value = list.data
     total.value = list.meta.total
     totalPages.value = list.meta.totalPages
+    pageSize.value = list.meta.limit
     filters.value = facets
     status.value = 'success'
   } catch (error) {
@@ -95,16 +126,27 @@ function toggleColor(id: string) {
   updateQuery({ color: toggleItem(query.value.color, id) })
 }
 
+function clearTypes() {
+  updateQuery({ type: [] })
+}
+
 function clearFilters() {
   updateQuery({ type: [], color: [] })
 }
 
-function onSortChange(event: Event) {
-  updateQuery({ sort: (event.target as HTMLSelectElement).value as ProductSort })
+function changeSort(sort: ProductSort) {
+  updateQuery({ sort })
 }
 
 function changePage(page: number) {
   updateQuery({ page })
+}
+
+async function shopShirts() {
+  updateQuery({ type: ['camiseta'], color: [] })
+  await nextTick()
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  results.value?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
 }
 
 watch(query, load, { immediate: true })
@@ -112,131 +154,191 @@ onBeforeUnmount(() => controller?.abort())
 </script>
 
 <template>
-  <main class="mx-auto max-w-6xl px-4 py-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-stone-900">Loja</h1>
-        <p class="mt-1 min-h-[1.25rem] text-sm text-stone-600" data-test="result-count">
-          <template v-if="status === 'success'">
-            {{ total }} {{ total === 1 ? 'produto' : 'produtos' }}
-          </template>
-        </p>
-      </div>
+  <main class="mx-auto max-w-7xl px-4 pb-24 md:px-12">
+    <CatalogHero
+      v-if="showHero"
+      :products="products.slice(0, 3)"
+      :total="status === 'success' ? total : undefined"
+      @shop="shopShirts"
+    />
 
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          class="rounded-full border border-stone-300 px-4 py-2 text-sm md:hidden"
-          aria-controls="catalog-filters"
-          :aria-expanded="showFilters ? 'true' : 'false'"
-          data-test="toggle-filters"
-          @click="showFilters = !showFilters"
+    <div
+      class="sticky top-[69px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink bg-paper/95 px-4 pb-3 pt-2.5 backdrop-blur [scrollbar-width:none] md:hidden"
+    >
+      <button
+        type="button"
+        class="flex h-11 flex-none items-center gap-1.5 rounded-panel border-2 border-ink bg-mustard px-3.5 text-sm font-semibold shadow-[3px_3px_0_#2A1F17] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        aria-haspopup="dialog"
+        :aria-expanded="showFilterSheet ? 'true' : 'false'"
+        data-test="toggle-filters"
+        @click="showFilterSheet = true"
+      >
+        Filtros
+        <span
+          v-if="activeFilterCount"
+          class="inline-flex h-5 min-w-5 items-center justify-center rounded-pill bg-ink px-1 text-[11px] text-surface"
         >
-          Filtros<span v-if="activeFilterCount"> ({{ activeFilterCount }})</span>
-        </button>
-        <label class="flex items-center gap-2 text-sm text-stone-600">
-          Ordenar por
-          <select
-            class="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900"
-            :value="query.sort"
-            data-test="sort"
-            @change="onSortChange"
-          >
-            <option v-for="option in SORT_OPTIONS" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
-      </div>
+          {{ activeFilterCount }}
+        </span>
+      </button>
+      <template v-if="filters">
+        <FilterChip label="Tudo" :pressed="query.type.length === 0" @click="clearTypes" />
+        <FilterChip
+          v-for="type in filters.types"
+          :key="type.id"
+          :label="type.label"
+          :pressed="query.type.includes(type.id)"
+          :disabled="type.count === 0 && !query.type.includes(type.id)"
+          @click="toggleType(type.id)"
+        />
+      </template>
     </div>
 
-    <div class="mt-6 md:grid md:grid-cols-[13rem_1fr] md:gap-8">
-      <aside
-        id="catalog-filters"
-        aria-label="Filtros"
-        class="mb-6 md:mb-0 md:block"
-        :class="{ hidden: !showFilters }"
-      >
-        <FilterPanel
-          v-if="filters"
-          :filters="filters"
-          :selected-types="query.type"
-          :selected-colors="query.color"
-          @toggle-type="toggleType"
-          @toggle-color="toggleColor"
-          @clear="clearFilters"
-        />
-      </aside>
+    <FilterPanel
+      v-if="filters"
+      class="sticky top-[72px] z-20 mb-1 mt-6 hidden md:block"
+      :filters="filters"
+      :selected-types="query.type"
+      :selected-colors="query.color"
+      :sort="query.sort"
+      @toggle-type="toggleType"
+      @toggle-color="toggleColor"
+      @clear-types="clearTypes"
+      @change-sort="changeSort"
+    />
 
-      <section aria-label="Produtos">
-        <div
-          v-if="status === 'loading' && !isRefreshing"
-          class="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3"
-          aria-busy="true"
-          data-test="loading"
-        >
-          <span class="sr-only" role="status">Carregando produtos…</span>
-          <ProductCardSkeleton v-for="n in SKELETON_COUNT" :key="n" />
+    <section ref="results" aria-labelledby="results-title" class="scroll-mt-40">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-5 md:pb-6 md:pt-9">
+        <div class="flex items-baseline gap-3">
+          <component
+            :is="showHero ? 'h2' : 'h1'"
+            id="results-title"
+            class="font-display text-title-sm md:text-title-md"
+          >
+            {{ resultTitle }}
+          </component>
+          <p class="min-h-[1.25rem] text-sm text-muted" data-test="result-count">
+            <template v-if="status === 'success'">
+              {{ total }} {{ total === 1 ? 'produto' : 'produtos' }}
+            </template>
+          </p>
         </div>
 
-        <FeedbackState
-          v-else-if="status === 'error'"
-          role="alert"
-          seal="XIII!"
-          seal-tone="accent"
-          title="Não conseguimos carregar a vitrine."
-          description="Pode ser a conexão. Seus filtros continuam salvos."
-          data-test="error"
-        >
-          <button type="button" class="btn-hq-accent" data-test="retry" @click="load">
-            Tentar de novo
-          </button>
-        </FeedbackState>
-
-        <FeedbackState
-          v-else-if="products.length === 0"
-          role="status"
-          seal="OPA!"
-          :title="
-            activeFilterCount
-              ? 'Nenhuma estampa com essa combinação.'
-              : 'Nenhum produto encontrado.'
-          "
-          :description="
-            activeFilterCount ? 'Tente tirar um filtro ou escolher outra cor.' : undefined
-          "
-          data-test="empty"
-        >
+        <div v-if="activeChips.length" class="flex flex-wrap items-center gap-1.5">
           <button
-            v-if="activeFilterCount"
+            v-for="chip in activeChips"
+            :key="chip.key"
             type="button"
-            class="btn-hq-accent"
-            data-test="empty-clear-filters"
+            class="flex h-[30px] items-center gap-2 rounded-control border-2 border-ink bg-accent pl-2.5 pr-1 text-[13px] font-medium text-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            :aria-label="`Remover filtro ${chip.label}`"
+            @click="chip.remove"
+          >
+            <span
+              v-if="chip.hex"
+              class="h-3 w-3 rounded-pill ring-[1.5px] ring-surface"
+              :style="{ backgroundColor: chip.hex }"
+              aria-hidden="true"
+            />
+            {{ chip.label }}
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded bg-ink text-[11px]"
+              aria-hidden="true"
+              >✕</span
+            >
+          </button>
+          <button
+            type="button"
+            class="ml-1.5 text-[13px] font-semibold underline decoration-2 underline-offset-[3px]"
+            data-test="clear-filters"
             @click="clearFilters"
           >
-            Limpar filtros
+            Limpar
           </button>
-        </FeedbackState>
+        </div>
+      </div>
 
-        <template v-else>
-          <ul
-            class="grid grid-cols-2 gap-x-4 gap-y-8 transition-opacity lg:grid-cols-3"
-            :class="{ 'opacity-50': isRefreshing }"
-            :aria-busy="isRefreshing ? 'true' : 'false'"
-            data-test="product-grid"
-          >
-            <li v-for="product in products" :key="product.id">
-              <ProductCard :product="product" />
-            </li>
-          </ul>
-          <PaginationNav
-            v-if="totalPages > 1"
-            :page="query.page"
-            :total-pages="totalPages"
-            @change="changePage"
-          />
-        </template>
-      </section>
-    </div>
+      <div
+        v-if="status === 'loading' && !isRefreshing"
+        class="grid grid-cols-2 gap-3.5 md:grid-cols-3 md:gap-7"
+        aria-busy="true"
+        data-test="loading"
+      >
+        <span class="sr-only" role="status">Carregando produtos…</span>
+        <ProductCardSkeleton v-for="n in SKELETON_COUNT" :key="n" />
+      </div>
+
+      <FeedbackState
+        v-else-if="status === 'error'"
+        role="alert"
+        seal="XIII!"
+        seal-tone="accent"
+        title="Não conseguimos carregar a vitrine."
+        description="Pode ser a conexão. Seus filtros continuam salvos."
+        data-test="error"
+      >
+        <button type="button" class="btn-hq-accent" data-test="retry" @click="load">
+          Tentar de novo
+        </button>
+      </FeedbackState>
+
+      <FeedbackState
+        v-else-if="products.length === 0"
+        role="status"
+        seal="OPA!"
+        :title="
+          activeFilterCount ? 'Nenhuma estampa com essa combinação.' : 'Nenhum produto encontrado.'
+        "
+        :description="
+          activeFilterCount ? 'Tente tirar um filtro ou escolher outra cor.' : undefined
+        "
+        data-test="empty"
+      >
+        <button
+          v-if="activeFilterCount"
+          type="button"
+          class="btn-hq-accent"
+          data-test="empty-clear-filters"
+          @click="clearFilters"
+        >
+          Limpar filtros
+        </button>
+      </FeedbackState>
+
+      <template v-else>
+        <ul
+          class="grid grid-cols-2 gap-3.5 transition-opacity md:grid-cols-3 md:gap-7"
+          :class="{ 'opacity-50': isRefreshing }"
+          :aria-busy="isRefreshing ? 'true' : 'false'"
+          data-test="product-grid"
+        >
+          <li v-for="product in products" :key="product.id">
+            <ProductCard :product="product" />
+          </li>
+        </ul>
+        <PaginationNav
+          v-if="totalPages > 1"
+          :page="query.page"
+          :total-pages="totalPages"
+          :total="total"
+          :page-size="pageSize"
+          @change="changePage"
+        />
+      </template>
+    </section>
+
+    <FilterSheet
+      v-if="filters"
+      :open="showFilterSheet"
+      :filters="filters"
+      :selected-types="query.type"
+      :selected-colors="query.color"
+      :sort="query.sort"
+      :total="total"
+      @close="showFilterSheet = false"
+      @toggle-type="toggleType"
+      @toggle-color="toggleColor"
+      @clear="clearFilters"
+      @change-sort="changeSort"
+    />
   </main>
 </template>
