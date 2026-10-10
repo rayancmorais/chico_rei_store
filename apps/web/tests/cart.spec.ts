@@ -1,16 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { useCartStore } from '@/stores/cart'
+import { productSummary } from './factories'
 
-const product = {
-  id: 'cam-1',
-  name: 'Camiseta',
-  type: 'camiseta',
-  priceCents: 7990,
-  image: 'https://x.test/a.jpg',
-  colors: [],
-}
-const preto = { id: 'preto', name: 'Preto', hex: '#111' }
-const branco = { id: 'branco', name: 'Branco', hex: '#fff' }
+const product = productSummary()
+const preto = { id: 'preto', name: 'Preto', hex: '#000000' }
+const branco = { id: 'branco', name: 'Branco', hex: '#ffffff' }
 
 describe('cart store', () => {
   beforeEach(() => setActivePinia(createPinia()))
