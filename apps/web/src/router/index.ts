@@ -15,4 +15,9 @@ export const router = new VueRouter({
       props: true,
     },
   ],
+  // Trocar de página ou de tela volta ao topo; marcar um filtro mantém a rolagem onde está.
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.path !== from.path || to.query.page !== from.query.page) return { x: 0, y: 0 }
+  },
 })
