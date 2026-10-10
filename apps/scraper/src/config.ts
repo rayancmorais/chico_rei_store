@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
-/** Limites do PDF: no máximo 5 páginas e pelo menos 1 s entre requisições. */
-
+// Limites do PDF: no máximo 5 páginas e pelo menos 1 s entre requisições.
 const PDF_MAX_PAGES = 5
 const PDF_MIN_DELAY_MS = 1000
 
