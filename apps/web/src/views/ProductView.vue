@@ -5,14 +5,18 @@ import type { Product } from '@chico_rei_store/shared'
 import { fetchProduct } from '@/services/api'
 import { useCartStore } from '@/stores/cart'
 import { formatPrice } from '@/utils/format'
-import { imageUrl } from '@/utils/image'
+import BurstSeal from '@/components/BurstSeal.vue'
 import ColorSelector from '@/components/ColorSelector.vue'
-import SizeSelector from '@/components/SizeSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
+import ProductGallery from '@/components/ProductGallery.vue'
+import RelatedProducts from '@/components/RelatedProducts.vue'
+import SizeSelector from '@/components/SizeSelector.vue'
 
 const props = defineProps<{ id: string }>()
 
 type Status = 'loading' | 'success' | 'error' | 'not-found'
+
+const SHAKE_MS = 500
 
 const cart = useCartStore()
 
@@ -21,17 +25,23 @@ const product = ref<Product | null>(null)
 const selectedColorId = ref<string | null>(null)
 const selectedSize = ref<string | null>(null)
 const justAdded = ref(false)
+// Só destaca o que falta depois que a pessoa tenta comprar; antes disso seria ruído na tela.
+const triedToAdd = ref(false)
+const shaking = ref(false)
+
+const colorSelector = ref<InstanceType<typeof ColorSelector> | null>(null)
+const sizeSelector = ref<InstanceType<typeof SizeSelector> | null>(null)
 
 const selectedColor = computed(
   () => product.value?.colors.find((color) => color.id === selectedColorId.value) ?? null,
 )
 const needsSize = computed(() => (product.value?.sizes.length ?? 0) > 0)
+const colorPending = computed(() => selectedColor.value === null)
+const sizePending = computed(() => needsSize.value && selectedSize.value === null)
 const missingChoice = computed(() => {
-  const missingColor = selectedColor.value === null
-  const missingSize = needsSize.value && selectedSize.value === null
-  if (missingColor && missingSize) return 'Escolha a cor e o tamanho'
-  if (missingColor) return 'Escolha a cor'
-  if (missingSize) return 'Escolha o tamanho'
+  if (colorPending.value && sizePending.value) return 'Escolha a cor e o tamanho'
+  if (colorPending.value) return 'Escolha a cor'
+  if (sizePending.value) return 'Escolha o tamanho'
   return null
 })
 const canAddToCart = computed(() => missingChoice.value === null)
@@ -40,7 +50,13 @@ const wasEnriched = computed(
     product.value !== null && (product.value.enriched.sizes || product.value.enriched.description),
 )
 
+const highlight = computed(() => ({
+  color: triedToAdd.value && colorPending.value,
+  size: triedToAdd.value && sizePending.value,
+}))
+
 let controller: AbortController | null = null
+let shakeTimer: ReturnType<typeof setTimeout> | undefined
 
 async function load() {
   controller?.abort()
@@ -52,6 +68,7 @@ async function load() {
   selectedColorId.value = null
   selectedSize.value = null
   justAdded.value = false
+  triedToAdd.value = false
 
   try {
     const data = await fetchProduct(props.id, current.signal)
@@ -67,8 +84,22 @@ async function load() {
   }
 }
 
+// O botão bloqueado continua clicável (aria-disabled): o clique mostra o que falta e leva o
+// foco até lá, em vez de não fazer nada como um `disabled` faria.
+function pointToMissingChoice() {
+  triedToAdd.value = true
+  shaking.value = true
+  clearTimeout(shakeTimer)
+  shakeTimer = setTimeout(() => {
+    shaking.value = false
+  }, SHAKE_MS)
+
+  const firstPending = colorPending.value ? colorSelector : sizeSelector
+  firstPending.value?.focus()
+}
+
 function addToCart() {
-  if (!product.value || !selectedColor.value || !canAddToCart.value) return
+  if (!product.value || !selectedColor.value) return
   cart.add(product.value, {
     color: selectedColor.value,
     size: needsSize.value ? selectedSize.value : null,
@@ -77,37 +108,72 @@ function addToCart() {
   cart.open()
 }
 
+// Um botão só, que muda de estado: assim o foco volta para ele quando o carrinho fecha.
+function onPrimaryClick() {
+  if (justAdded.value) cart.open()
+  else if (!canAddToCart.value) pointToMissingChoice()
+  else addToCart()
+}
+
 // O Vue reaproveita esta view ao ir de um produto para outro: sem o watch no id, a tela
 // continuaria mostrando o produto anterior.
 watch(() => props.id, load, { immediate: true })
 watch([selectedColorId, selectedSize], () => {
   justAdded.value = false
 })
-onBeforeUnmount(() => controller?.abort())
+onBeforeUnmount(() => {
+  controller?.abort()
+  clearTimeout(shakeTimer)
+})
 </script>
 
 <template>
-  <main class="mx-auto max-w-6xl px-4 py-6">
-    <router-link
-      :to="{ name: 'catalog' }"
-      class="text-sm text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
+  <main class="mx-auto max-w-7xl px-4 pb-24 md:px-12">
+    <nav
+      aria-label="Navegação estrutural"
+      class="flex items-center gap-2 py-4 text-sm font-semibold md:py-6"
     >
-      ← Voltar para a loja
-    </router-link>
+      <router-link
+        :to="{ name: 'catalog' }"
+        class="flex h-8 items-center gap-1.5 rounded-control border-2 border-ink bg-white px-3 shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      >
+        <span aria-hidden="true">←</span> Loja
+      </router-link>
+      <template v-if="product">
+        <span class="text-muted" aria-hidden="true">/</span>
+        <router-link
+          :to="{ name: 'catalog', query: { type: product.type.id } }"
+          class="text-accent underline-offset-2 hover:underline"
+        >
+          {{ product.type.label }}
+        </router-link>
+      </template>
+    </nav>
 
     <div
       v-if="status === 'loading'"
-      class="mt-6 grid gap-8 motion-safe:animate-pulse md:grid-cols-2"
+      class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
       aria-busy="true"
       data-test="loading"
     >
       <span class="sr-only" role="status">Carregando produto…</span>
-      <div class="aspect-square rounded-lg bg-stone-200" aria-hidden="true" />
-      <div class="space-y-4" aria-hidden="true">
-        <div class="h-4 w-24 rounded bg-stone-200" />
-        <div class="h-8 w-3/4 rounded bg-stone-200" />
-        <div class="h-6 w-28 rounded bg-stone-200" />
-        <div class="h-24 rounded bg-stone-200" />
+      <div
+        class="relative aspect-[4/5] overflow-hidden rounded-panel border-3 border-ink bg-sand shadow-hq md:shadow-hq-lg"
+        aria-hidden="true"
+      >
+        <span
+          class="absolute inset-0 bg-[linear-gradient(100deg,transparent_30%,rgba(255,255,255,.55)_50%,transparent_70%)] bg-[length:200%_100%] motion-safe:animate-shimmer"
+        />
+      </div>
+      <div
+        class="flex flex-col gap-4 rounded-panel border-3 border-ink bg-surface p-6 shadow-hq md:shadow-hq-lg"
+        aria-hidden="true"
+      >
+        <div class="h-3 w-24 rounded-pill bg-[#E0D4C1]" />
+        <div class="h-10 w-4/5 rounded-pill bg-[#E0D4C1]" />
+        <div class="h-7 w-28 rounded-pill bg-[#E0D4C1]" />
+        <div class="h-24 rounded-panel bg-[#E0D4C1]" />
+        <div class="h-14 rounded-panel bg-[#E0D4C1]" />
       </div>
     </div>
 
@@ -136,91 +202,136 @@ onBeforeUnmount(() => controller?.abort())
       </button>
     </FeedbackState>
 
-    <article v-else-if="product" class="mt-6 grid gap-8 md:grid-cols-2" data-test="product">
-      <div class="aspect-square overflow-hidden rounded-lg bg-stone-100">
-        <img
-          :src="imageUrl(product.image, 800)"
-          :srcset="`${imageUrl(product.image, 600)} 600w, ${imageUrl(product.image, 1200)} 1200w`"
-          sizes="(min-width: 768px) 50vw, 100vw"
-          :alt="product.name"
-          width="800"
-          height="800"
-          class="h-full w-full object-contain"
-        />
-      </div>
+    <template v-else-if="product">
+      <article
+        class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
+        data-test="product"
+      >
+        <ProductGallery :image="product.image" :name="product.name" :code="product.id" />
 
-      <div class="flex flex-col gap-6">
-        <div>
-          <p class="text-xs uppercase tracking-wide text-stone-500">{{ product.type.label }}</p>
-          <h1 class="mt-1 text-2xl font-bold text-stone-900">{{ product.name }}</h1>
-          <p class="mt-2 text-xl" data-test="price">
-            <span
-              v-if="product.originalPriceCents !== null"
-              class="mr-2 text-base text-stone-400 line-through"
+        <div
+          class="flex flex-col overflow-hidden rounded-panel border-3 border-ink bg-surface shadow-hq md:sticky md:top-24 md:shadow-hq-lg"
+        >
+          <div
+            class="flex items-center justify-between gap-3 border-b-3 border-ink bg-mustard px-5 py-3 md:px-7"
+          >
+            <span class="text-eyebrow uppercase">{{ product.type.label }}</span>
+            <span class="text-xs font-semibold">Nº {{ product.id }}</span>
+          </div>
+
+          <div class="flex flex-col gap-7 px-5 pb-7 pt-6 md:px-7">
+            <div class="flex flex-col gap-3">
+              <h1
+                class="text-balance font-display text-[32px] leading-[1.06] tracking-[-0.02em] md:text-[40px]"
+              >
+                {{ product.name }}
+              </h1>
+              <p class="flex flex-wrap items-baseline gap-x-3" data-test="price">
+                <span
+                  v-if="product.originalPriceCents !== null"
+                  class="text-lg text-muted line-through"
+                >
+                  <span class="sr-only">De</span> {{ formatPrice(product.originalPriceCents) }}
+                </span>
+                <span class="text-[30px] font-bold tracking-[-0.02em]">
+                  <span v-if="product.originalPriceCents !== null" class="sr-only">por</span>
+                  {{ formatPrice(product.priceCents) }}
+                </span>
+              </p>
+            </div>
+
+            <ColorSelector
+              ref="colorSelector"
+              v-model="selectedColorId"
+              :colors="product.colors"
+              :pending="highlight.color"
+              :class="{ 'motion-safe:animate-shake': shaking && highlight.color }"
+              data-test="color-selector"
+            />
+            <SizeSelector
+              v-if="needsSize"
+              ref="sizeSelector"
+              v-model="selectedSize"
+              :sizes="product.sizes"
+              :pending="highlight.size"
+              :class="{ 'motion-safe:animate-shake': shaking && highlight.size }"
+              data-test="size-selector"
+            />
+
+            <div class="relative">
+              <button
+                type="button"
+                class="flex w-full flex-col items-center justify-center gap-0.5 rounded-panel border-ink font-bold transition-[transform,box-shadow] duration-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+                :class="
+                  canAddToCart
+                    ? [
+                        'h-[58px] border-3 text-base text-surface shadow-hq hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#2A1F17] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#2A1F17]',
+                        justAdded
+                          ? 'bg-success motion-safe:animate-pop'
+                          : 'bg-accent hover:bg-accent-hover',
+                      ]
+                    : 'h-[62px] cursor-not-allowed border-2.5 border-dashed bg-[#EDE4D5]'
+                "
+                :aria-disabled="canAddToCart ? undefined : 'true'"
+                data-test="add-to-cart"
+                @click="onPrimaryClick"
+              >
+                <template v-if="!canAddToCart">
+                  <span class="text-[15px]">Adicionar ao carrinho</span>
+                  <span class="text-sm font-semibold text-accent">
+                    <span aria-hidden="true">↑ </span>
+                    <span data-test="missing-choice">{{ missingChoice }}</span>
+                  </span>
+                </template>
+                <template v-else-if="justAdded">
+                  <span><span aria-hidden="true">✓ </span>Adicionado · Ver carrinho →</span>
+                </template>
+                <template v-else>
+                  <span>Adicionar ao carrinho — {{ formatPrice(product.priceCents) }}</span>
+                </template>
+              </button>
+              <!-- O wrapper posiciona: o BurstSeal já é `relative` e ganharia da classe `absolute`. -->
+              <span
+                v-if="justAdded"
+                class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
+              >
+                <BurstSeal label="BOA!" size="sm" />
+              </span>
+              <p class="sr-only" role="status" :data-test="justAdded ? 'added' : undefined">
+                {{ justAdded ? 'Adicionado ao carrinho' : '' }}
+              </p>
+            </div>
+
+            <section
+              class="relative mt-2 rounded-[4px] border-2.5 border-ink bg-mustard px-4 pb-3.5 pt-4"
+              aria-labelledby="about-title"
             >
-              <span class="sr-only">De</span> {{ formatPrice(product.originalPriceCents) }}
-            </span>
-            <span class="font-semibold text-stone-900">
-              <span v-if="product.originalPriceCents !== null" class="sr-only">por</span>
-              {{ formatPrice(product.priceCents) }}
-            </span>
-          </p>
-        </div>
+              <h2
+                id="about-title"
+                class="absolute -top-3 left-3 rounded-[4px] border-2 border-ink bg-surface px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]"
+              >
+                Sobre a peça
+              </h2>
+              <p class="text-pretty text-sm leading-relaxed">{{ product.description }}</p>
+              <p v-if="wasEnriched" class="mt-3 text-xs" data-test="enriched-note">
+                A listagem da loja original não informa tamanhos nem descrição; estes foram gerados
+                para a demonstração.
+              </p>
+            </section>
 
-        <ColorSelector v-model="selectedColorId" :colors="product.colors" />
-        <SizeSelector
-          v-if="needsSize"
-          v-model="selectedSize"
-          :sizes="product.sizes"
-          data-test="size-selector"
-        />
-
-        <div>
-          <button
-            type="button"
-            class="w-full rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 md:w-auto"
-            :disabled="!canAddToCart"
-            :aria-describedby="missingChoice ? 'add-to-cart-hint' : undefined"
-            data-test="add-to-cart"
-            @click="addToCart"
-          >
-            Adicionar ao carrinho
-          </button>
-          <p
-            v-if="missingChoice"
-            id="add-to-cart-hint"
-            class="mt-2 text-sm text-stone-600"
-            data-test="missing-choice"
-          >
-            {{ missingChoice }}
-          </p>
-          <p
-            v-else-if="justAdded"
-            class="mt-2 text-sm font-medium text-green-700"
-            role="status"
-            data-test="added"
-          >
-            Adicionado ao carrinho
-          </p>
+            <a
+              :href="product.sourceUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="self-start text-sm font-semibold underline decoration-2 underline-offset-[3px] hover:text-accent"
+            >
+              Ver na loja original<span class="sr-only"> (abre em nova aba)</span>
+            </a>
+          </div>
         </div>
+      </article>
 
-        <div class="border-t border-stone-200 pt-6">
-          <h2 class="text-sm font-medium text-stone-900">Descrição</h2>
-          <p class="mt-2 text-sm leading-relaxed text-stone-700">{{ product.description }}</p>
-          <p v-if="wasEnriched" class="mt-4 text-xs text-stone-500" data-test="enriched-note">
-            A listagem da loja original não informa tamanhos nem descrição; estes foram gerados para
-            a demonstração.
-          </p>
-          <a
-            :href="product.sourceUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mt-2 inline-block text-xs text-stone-600 underline underline-offset-2 hover:text-stone-900"
-          >
-            Ver na loja original<span class="sr-only"> (abre em nova aba)</span>
-          </a>
-        </div>
-      </div>
-    </article>
+      <RelatedProducts :product-id="product.id" :type-id="product.type.id" />
+    </template>
   </main>
 </template>
