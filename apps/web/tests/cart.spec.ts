@@ -1,5 +1,7 @@
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { MAX_QUANTITY, useCartStore } from '@/stores/cart'
+import { CART_STORAGE_KEY } from '@/stores/cart-storage'
 import { productSummary } from './factories'
 
 const camiseta = productSummary({ id: 'cam-1', priceCents: 7990 })
@@ -90,5 +92,67 @@ describe('cart store', () => {
     expect(cart.isOpen).toBe(true)
     cart.close()
     expect(cart.isOpen).toBe(false)
+  })
+
+  describe('persistência', () => {
+    // Uma pinia nova simula recarregar a página: a store nasce do zero e lê o localStorage.
+    const reload = () => {
+      setActivePinia(createPinia())
+      return useCartStore()
+    }
+
+    it('o carrinho sobrevive ao recarregamento, mas o drawer volta fechado', async () => {
+      const cart = useCartStore()
+      cart.add(camiseta, { color: preto, size: 'M' }, 2)
+      cart.open()
+      await nextTick()
+
+      const reloaded = reload()
+      expect(reloaded.items).toHaveLength(1)
+      expect(reloaded.itemCount).toBe(2)
+      expect(reloaded.isOpen).toBe(false)
+    })
+
+    it('salva também mudança de quantidade e remoção', async () => {
+      const cart = useCartStore()
+      cart.add(camiseta, { color: preto, size: 'M' })
+      cart.add(caneca, { color: branco, size: null })
+      await nextTick()
+
+      cart.setQuantity(cart.items[0]!.key, 5)
+      cart.remove(cart.items[1]!.key)
+      await nextTick()
+
+      const reloaded = reload()
+      expect(reloaded.items.map((item) => [item.productId, item.quantity])).toEqual([['cam-1', 5]])
+    })
+
+    it('quantidade salva acima do máximo volta para o limite', () => {
+      const cart = useCartStore()
+      cart.add(camiseta, { color: preto, size: 'M' })
+      const saved = [{ ...cart.items[0], quantity: 99 }]
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(saved))
+
+      expect(reload().items[0]?.quantity).toBe(MAX_QUANTITY)
+    })
+
+    it('acompanha o que outra aba muda no carrinho', () => {
+      const cart = useCartStore()
+      const fromOtherTab = {
+        key: 'can-1::branco::unico',
+        productId: 'can-1',
+        name: caneca.name,
+        image: caneca.image,
+        unitPriceCents: caneca.priceCents,
+        color: branco,
+        size: null,
+        quantity: 3,
+      }
+      const newValue = JSON.stringify([fromOtherTab])
+
+      window.dispatchEvent(new StorageEvent('storage', { key: CART_STORAGE_KEY, newValue }))
+
+      expect(cart.items).toEqual([fromOtherTab])
+    })
   })
 })
