@@ -8,8 +8,10 @@ export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**', 'data/**', '**/playwright-report/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+
   // O preset do Vue só faz sentido em SFC; sem o `files`, regras como one-component-per-file
   // também rodariam nos .ts da API e do scraper.
+
   ...pluginVue.configs['flat/vue2-recommended'].map((config) => ({
     ...config,
     files: ['**/*.vue'],
