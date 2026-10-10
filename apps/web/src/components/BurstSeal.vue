@@ -1,23 +1,32 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ label: string; tone?: 'mustard' | 'accent'; size?: 'sm' | 'md' }>(), {
-  tone: 'mustard',
-  size: 'md',
+import { computed } from 'vue'
+
+const props = withDefaults(
+  defineProps<{ label: string; tone?: 'mustard' | 'accent'; size?: 'sm' | 'md' }>(),
+  { tone: 'mustard', size: 'md' },
+)
+
+// Onomatopeia curta ("POW!") cabe grande; frase ("Arte autoral") precisa de letra menor para
+// não ser cortada pelas pontas da estrela.
+const isPhrase = computed(() => props.label.length > 6)
+const textSize = computed(() => {
+  if (props.size === 'md') return isPhrase.value ? 'text-lg' : 'text-[28px]'
+  return isPhrase.value ? 'text-[13px]' : 'text-lg'
 })
 </script>
 
 <template>
+  <!-- As camadas se empilham pelo grid, e não por `absolute`: assim a raiz não precisa ser
+       `relative` e quem usa o selo pode posicioná-lo com `absolute` sem conflito de classes. -->
   <span
-    class="relative inline-block shrink-0"
+    class="inline-grid shrink-0"
     :class="size === 'md' ? 'h-[104px] w-[130px]' : 'h-[64px] w-[80px]'"
     aria-hidden="true"
   >
-    <span class="burst absolute inset-0 bg-ink" />
+    <span class="burst bg-ink [grid-area:1/1]" />
     <span
-      class="burst absolute inset-1 flex items-center justify-center text-center font-display leading-none"
-      :class="[
-        tone === 'accent' ? 'bg-accent text-surface' : 'bg-mustard text-ink',
-        size === 'md' ? 'text-[28px]' : 'text-lg',
-      ]"
+      class="burst m-1 flex items-center justify-center px-3 text-center font-display leading-[1.05] [grid-area:1/1]"
+      :class="[tone === 'accent' ? 'bg-accent text-surface' : 'bg-mustard text-ink', textSize]"
     >
       {{ label }}
     </span>

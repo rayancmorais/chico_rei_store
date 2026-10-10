@@ -295,7 +295,12 @@ onBeforeUnmount(() => {
                 v-if="justAdded"
                 class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
               >
-                <BurstSeal label="BOA!" size="sm" />
+                <BurstSeal
+                  v-if="justAdded"
+                  label="BOA!"
+                  size="sm"
+                  class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
+                />
               </span>
               <p class="sr-only" role="status" :data-test="justAdded ? 'added' : undefined">
                 {{ justAdded ? 'Adicionado ao carrinho' : '' }}
