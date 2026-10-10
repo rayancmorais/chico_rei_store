@@ -40,3 +40,21 @@ export const ProductQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(60).default(24),
 })
+
+/**
+ * produto como sai do scraper e fica gravado no seed. só o que a fonte traz.
+ * tamanhos e descrição não existem aqui. a API vai enriquecer eles no adapter.
+ */
+
+export const RawProductSchema = z.object({
+  sourceId: z.string(),
+  name: z.string(),
+  url: z.string().url(),
+  type: z.object({ id: z.string(), label: z.string() }),
+  priceCents: z.number().int().nonnegative(),
+  originalPriceCents: z.number().int().nonnegative().nullable(),
+  image: z.string().url(),
+  colors: z.array(ColorSchema),
+  isClothing: z.boolean(),
+  models: z.array(z.string()),
+})
