@@ -1,17 +1,39 @@
-const BASE_URL = 'https://umapenca.com/loja/'
-const MAX_PAGES = Math.min(Number(process.env.SCRAPER_MAX_PAGES ?? 5), 5)
-const DELAY_MS = Math.max(Number(process.env.SCRAPER_DELAY_MS ?? 1200), 1000)
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { collectProducts } from './collect'
+import { config, pageUrl } from './config'
+import { fetchHtml, sleep } from './http'
 
-const pageUrl = (page: number) => (page === 1 ? BASE_URL : `${BASE_URL}?page=${page}`)
+const SEED_PATH = fileURLToPath(new URL('../../../data/seed.json', import.meta.url))
 
-console.log(`Scraper pronto: até ${MAX_PAGES} páginas, ${DELAY_MS} ms entre requisições`)
-console.log(`Primeira página: ${pageUrl(1)}`)
+async function main() {
+  console.log(`Coletando até ${config.maxPages} páginas, ${config.delayMs} ms entre requisições`)
 
-// Laço final (sequencial, nunca Promise.all):
-// for (let page = 1; page <= MAX_PAGES; page++) {
-//   if (page > 1) await sleep(DELAY_MS)
-//   const html = await fetchHtml(pageUrl(page))
-//   const data = SourcePageSchema.parse(extractInitialData(html))
-//   collected.push(...toRawProducts(data))
-//   if (data.products.current_page >= data.products.total_pages) break
-// }
+  const { pagesCollected, products } = await collectProducts({
+    maxPages: config.maxPages,
+    delayMs: config.delayMs,
+    pageUrl,
+    wait: sleep,
+    fetchPage: (url) => fetchHtml(url, config),
+    log: (message) => console.log(`  ${message}`),
+  })
+
+  const seed = {
+    source: config.baseUrl,
+    collectedAt: new Date().toISOString(),
+    pages: pagesCollected,
+    products,
+  }
+
+  await mkdir(dirname(SEED_PATH), { recursive: true })
+  await writeFile(SEED_PATH, `${JSON.stringify(seed, null, 2)}\n`)
+  console.log(
+    `Seed gravado: ${products.length} produtos de ${pagesCollected} páginas em data/seed.json`,
+  )
+}
+
+main().catch((error: unknown) => {
+  console.error('Falha na coleta:', error instanceof Error ? error.message : error)
+  process.exitCode = 1
+})
