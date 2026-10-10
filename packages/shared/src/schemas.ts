@@ -3,14 +3,12 @@ import { z } from 'zod'
 export const ColorSchema = z.object({ id: z.string(), name: z.string(), hex: z.string() })
 
 /** `id` vai na URL dos filtros; `label` é o nome exibido ("ima" não vira "Kit de Imãs"). */
-
 export const ProductTypeSchema = z.object({ id: z.string(), label: z.string() })
 
 /**
  * Produto como sai do scraper e fica gravado no seed: só o que a fonte traz.
  * Tamanhos e descrição não existem aqui; a API os enriquece no adapter.
  */
-
 export const RawProductSchema = z.object({
   sourceId: z.string(),
   name: z.string(),
@@ -40,15 +38,20 @@ export const ProductSchema = z.object({
   image: z.string().url(),
   description: z.string(),
   colors: z.array(ColorSchema),
+
   /** Vazio quando o produto não tem tamanho (caneca, ecobag...): o seletor não aparece. */
+
   sizes: z.array(z.string()),
   models: z.array(z.string()),
   sourceUrl: z.string().url(),
+
   /** O que foi gerado pela API, e não veio da fonte. */
+
   enriched: z.object({ sizes: z.boolean(), description: z.boolean() }),
 })
 
 /** Só o que o card da listagem usa: resposta da listagem mais leve. */
+
 export const ProductSummarySchema = ProductSchema.pick({
   id: true,
   name: true,
@@ -76,4 +79,32 @@ export const ProductQuerySchema = z.object({
   color: csv,
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(60).default(24),
+  sort: z.enum(['relevance', 'price_asc', 'price_desc']).default('relevance'),
+})
+
+export const ProductListResponseSchema = z.object({
+  data: z.array(ProductSummarySchema),
+  meta: z.object({
+    total: z.number().int(),
+    page: z.number().int(),
+    limit: z.number().int(),
+    totalPages: z.number().int(),
+  }),
+})
+
+const count = z.number().int()
+
+/** Cada opção traz quantos produtos ela retorna junto com os outros filtros ativos. */
+
+export const FiltersResponseSchema = z.object({
+  types: z.array(ProductTypeSchema.extend({ count })),
+  colors: z.array(ColorSchema.extend({ count })),
+})
+
+export const ApiErrorBodySchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    details: z.unknown().optional(),
+  }),
 })
