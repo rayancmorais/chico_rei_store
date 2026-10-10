@@ -1,4 +1,4 @@
-import { extractInitialData, slugify } from '../src/parse'
+import { extractInitialData } from '../src/parse'
 import { SourcePageSchema } from '../src/source-schema'
 import { loadFixture } from './load-fixture'
 
@@ -23,12 +23,5 @@ describe('extractInitialData', () => {
 
   it('falha com mensagem clara quando a página não tem o JSON', () => {
     expect(() => extractInitialData('<html></html>')).toThrow('vueInitialData não encontrado')
-  })
-})
-
-describe('slugify', () => {
-  it('remove acentos e troca espaços por hífen', () => {
-    expect(slugify('Cinza Mescla')).toBe('cinza-mescla')
-    expect(slugify('Lilás')).toBe('lilas')
   })
 })

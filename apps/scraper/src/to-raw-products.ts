@@ -1,8 +1,8 @@
 import type { Color, RawProduct } from '@chico_rei_store/shared'
-import { slugify } from './parse'
+import { slugify } from './slugify'
 import type { SourcePage, SourceProduct } from './source-schema'
 
-/** centavos inteiros para evitar erro de ponto flutuante (ex.: 72.9 * 100 = 7290.000000000001). */
+/** Centavos inteiros para evitar erro de ponto flutuante (ex.: 72.9 * 100 = 7290.000000000001). */
 const toCents = (value: number) => Math.round(value * 100)
 
 const toColor = (name: string, hex: string): Color => ({
@@ -11,19 +11,16 @@ const toColor = (name: string, hex: string): Color => ({
   hex: hex.toLowerCase(),
 })
 
-/**
- * as cores do produto, sem repetição: tecidos diferentes podem ter a mesma cor final.
- * sem tecidos (ecobag, caderno...), usa a cor única do produto, quando existir.
- */
-function extractColors(product: SourceProduct): Color[] {
-  const candidates = product.fabrics.length
-    ? product.fabrics.map((f) => toColor(f.product_color_name, f.product_color_hexa))
-    : product.product_color
-      ? [toColor(product.product_color.name, product.product_color.hexa)]
-      : []
+const fallbackColorOf = ({ product_color }: SourceProduct): Color[] =>
+  product_color ? [toColor(product_color.name, product_color.hexa)] : []
 
-  const unique = new Map(candidates.map((color) => [color.id, color]))
-  return [...unique.values()]
+// Tecidos diferentes podem ter a mesma cor final.
+function uniqueColorsOf(product: SourceProduct): Color[] {
+  const colors = product.fabrics.length
+    ? product.fabrics.map((fabric) => toColor(fabric.product_color_name, fabric.product_color_hexa))
+    : fallbackColorOf(product)
+
+  return [...new Map(colors.map((color) => [color.id, color])).values()]
 }
 
 export function toRawProduct(product: SourceProduct): RawProduct {
@@ -35,9 +32,9 @@ export function toRawProduct(product: SourceProduct): RawProduct {
     priceCents: toCents(product.price),
     originalPriceCents: product.price_old > product.price ? toCents(product.price_old) : null,
     image: product.img_cover,
-    colors: extractColors(product),
+    colors: uniqueColorsOf(product),
     isClothing: product.is_clothing,
-    models: product.models.map((m) => m.name),
+    models: product.models.map((model) => model.name),
   }
 }
 
