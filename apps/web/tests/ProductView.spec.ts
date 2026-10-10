@@ -77,6 +77,7 @@ describe('ProductView', () => {
     expect(cart.items[0]).toMatchObject({ productId: 'cam-1', size: 'G', quantity: 1 })
     expect(cart.items[0]?.color.id).toBe('branco')
     expect(wrapper.find('[data-test="added"]').attributes('role')).toBe('status')
+    expect(cart.isOpen).toBe(true)
   })
 
   it('produto sem tamanho não mostra o seletor e só exige a cor', async () => {

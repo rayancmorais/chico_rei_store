@@ -74,6 +74,7 @@ function addToCart() {
     size: needsSize.value ? selectedSize.value : null,
   })
   justAdded.value = true
+  cart.open()
 }
 
 // O Vue reaproveita esta view ao ir de um produto para outro: sem o watch no id, a tela
