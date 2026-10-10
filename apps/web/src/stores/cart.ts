@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Color, ProductSummary } from '@chico_rei_store/shared'
+import { CART_STORAGE_KEY, loadCart, parseCart, saveCart } from './cart-storage'
 
 export interface CartItem {
   key: string
@@ -32,8 +33,19 @@ function clampQuantity(quantity: number) {
 }
 
 export const useCartStore = defineStore('cart', () => {
-  const items = ref<CartItem[]>([])
+  // O limite pode ter mudado desde que o item foi salvo, então a quantidade passa pelo clamp de novo.
+  const restore = (saved: CartItem[]) =>
+    saved.map((item) => ({ ...item, quantity: clampQuantity(item.quantity) }))
+
+  const items = ref<CartItem[]>(restore(loadCart()))
   const isOpen = ref(false)
+
+  watch(items, saveCart, { deep: true })
+
+  // Outra aba mexeu no carrinho: sem isso, a próxima gravação desta aba apagaria a mudança dela.
+  window.addEventListener('storage', (event) => {
+    if (event.key === CART_STORAGE_KEY) items.value = restore(parseCart(event.newValue))
+  })
 
   const itemCount = computed(() => items.value.reduce((count, item) => count + item.quantity, 0))
   const subtotalCents = computed(() =>
