@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { nextTick, ref } from 'vue'
 import { MAX_QUANTITY, useCartStore, type CartItem } from '@/stores/cart'
+import { useModalDialog } from '@/composables/useModalDialog'
 import { formatPrice } from '@/utils/format'
 import { imageUrl } from '@/utils/image'
 
@@ -9,51 +10,15 @@ const cart = useCartStore()
 const panel = ref<HTMLElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, [tabindex]'
-
-let focusBeforeOpen: HTMLElement | null = null
+const { onKeydown } = useModalDialog({
+  isOpen: () => cart.isOpen,
+  panel,
+  initialFocus: closeButton,
+  onClose: () => cart.close(),
+})
 
 function variantLabel(item: CartItem) {
   return item.size ? `${item.color.name} · Tamanho ${item.size}` : item.color.name
-}
-
-// Ao abrir, o foco entra no drawer; ao fechar, volta para quem o abriu. Sem isso, quem usa
-// teclado ficaria com o foco perdido atrás do overlay.
-watch(
-  () => cart.isOpen,
-  async (isOpen) => {
-    if (isOpen) {
-      focusBeforeOpen = document.activeElement as HTMLElement | null
-      document.body.style.overflow = 'hidden'
-      await nextTick()
-      closeButton.value?.focus()
-    } else {
-      document.body.style.overflow = ''
-      focusBeforeOpen?.focus()
-    }
-  },
-)
-
-/** Esc fecha; Tab e Shift+Tab ficam dentro do drawer enquanto ele está aberto. */
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    cart.close()
-    return
-  }
-  if (event.key !== 'Tab' || !panel.value) return
-
-  const focusable = panel.value.querySelectorAll<HTMLElement>(FOCUSABLE)
-  const first = focusable[0]
-  const last = focusable[focusable.length - 1]
-  if (!first || !last) return
-
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault()
-    last.focus()
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault()
-    first.focus()
-  }
 }
 
 // O botão clicado some junto com o item; o foco precisa de um lugar para ir.
@@ -62,10 +27,6 @@ async function removeItem(key: string) {
   await nextTick()
   closeButton.value?.focus()
 }
-
-onBeforeUnmount(() => {
-  document.body.style.overflow = ''
-})
 </script>
 
 <template>
