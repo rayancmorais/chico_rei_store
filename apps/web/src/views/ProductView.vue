@@ -290,18 +290,12 @@ onBeforeUnmount(() => {
                   <span>Adicionar ao carrinho — {{ formatPrice(product.priceCents) }}</span>
                 </template>
               </button>
-              <!-- O wrapper posiciona: o BurstSeal já é `relative` e ganharia da classe `absolute`. -->
-              <span
+              <BurstSeal
                 v-if="justAdded"
+                label="BOA!"
+                size="sm"
                 class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
-              >
-                <BurstSeal
-                  v-if="justAdded"
-                  label="BOA!"
-                  size="sm"
-                  class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
-                />
-              </span>
+              />
               <p class="sr-only" role="status" :data-test="justAdded ? 'added' : undefined">
                 {{ justAdded ? 'Adicionado ao carrinho' : '' }}
               </p>
