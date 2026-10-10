@@ -1,4 +1,4 @@
-import type { ProductListResponse, ProductSummary } from '@chico_rei_store/shared'
+import type { FiltersResponse, ProductListResponse, ProductSummary } from '@chico_rei_store/shared'
 
 export function productSummary(overrides: Partial<ProductSummary> = {}): ProductSummary {
   return {
@@ -13,9 +13,26 @@ export function productSummary(overrides: Partial<ProductSummary> = {}): Product
   }
 }
 
-export function listResponse(products: ProductSummary[]): ProductListResponse {
+export function listResponse(
+  products: ProductSummary[],
+  meta: Partial<ProductListResponse['meta']> = {},
+): ProductListResponse {
   return {
     data: products,
-    meta: { total: products.length, page: 1, limit: 24, totalPages: 1 },
+    meta: { total: products.length, page: 1, limit: 24, totalPages: 1, ...meta },
+  }
+}
+
+export function filtersResponse(overrides: Partial<FiltersResponse> = {}): FiltersResponse {
+  return {
+    types: [
+      { id: 'camiseta', label: 'Camiseta', count: 3 },
+      { id: 'caneca', label: 'Caneca', count: 0 },
+    ],
+    colors: [
+      { id: 'preto', name: 'Preto', hex: '#000000', count: 2 },
+      { id: 'branco', name: 'Branco', hex: '#ffffff', count: 1 },
+    ],
+    ...overrides,
   }
 }
