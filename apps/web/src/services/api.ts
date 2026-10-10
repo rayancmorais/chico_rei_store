@@ -1,5 +1,10 @@
 import axios from 'axios'
-import type { FiltersResponse, ProductListResponse, ProductSort } from '@chico_rei_store/shared'
+import type {
+  FiltersResponse,
+  Product,
+  ProductListResponse,
+  ProductSort,
+} from '@chico_rei_store/shared'
 
 export const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -38,5 +43,10 @@ export async function fetchFilters(
     params: toQueryParams(params),
     signal,
   })
+  return data
+}
+
+export async function fetchProduct(id: string, signal?: AbortSignal) {
+  const { data } = await http.get<Product>(`/products/${encodeURIComponent(id)}`, { signal })
   return data
 }

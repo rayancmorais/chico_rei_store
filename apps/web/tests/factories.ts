@@ -1,4 +1,9 @@
-import type { FiltersResponse, ProductListResponse, ProductSummary } from '@chico_rei_store/shared'
+import type {
+  FiltersResponse,
+  Product,
+  ProductListResponse,
+  ProductSummary,
+} from '@chico_rei_store/shared'
 
 export function productSummary(overrides: Partial<ProductSummary> = {}): ProductSummary {
   return {
@@ -33,6 +38,22 @@ export function filtersResponse(overrides: Partial<FiltersResponse> = {}): Filte
       { id: 'preto', name: 'Preto', hex: '#000000', count: 2 },
       { id: 'branco', name: 'Branco', hex: '#ffffff', count: 1 },
     ],
+    ...overrides,
+  }
+}
+
+export function product(overrides: Partial<Product> = {}): Product {
+  return {
+    ...productSummary(),
+    colors: [
+      { id: 'preto', name: 'Preto', hex: '#000000' },
+      { id: 'branco', name: 'Branco', hex: '#ffffff' },
+    ],
+    description: 'Camiseta de algodão.',
+    sizes: ['P', 'M', 'G'],
+    models: ['Tradicional'],
+    sourceUrl: 'https://umapenca.com/produto/cam-1.html',
+    enriched: { sizes: true, description: true },
     ...overrides,
   }
 }
