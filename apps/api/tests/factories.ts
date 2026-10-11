@@ -13,6 +13,7 @@ export function product(overrides: Partial<Product> = {}): Product {
     priceCents: 6690,
     originalPriceCents: null,
     image: 'https://umapenca.imgix.net/1/capa.png',
+    imagesByColor: {},
     description: 'Camiseta Teste, estampa produzida sob demanda pela Uma Penca.',
     colors: [preto],
     sizes: ['P', 'M', 'G', 'GG', '2GG'],

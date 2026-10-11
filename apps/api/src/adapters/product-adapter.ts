@@ -9,6 +9,7 @@ export function toProduct(raw: RawProduct): Product {
     priceCents: raw.priceCents,
     originalPriceCents: raw.originalPriceCents,
     image: raw.image,
+    imagesByColor: raw.imagesByColor ?? {},
     description: enrichDescription(raw),
     colors: enrichColors(raw),
     sizes: enrichSizes(raw),

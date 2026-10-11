@@ -45,6 +45,7 @@ export function filtersResponse(overrides: Partial<FiltersResponse> = {}): Filte
 export function product(overrides: Partial<Product> = {}): Product {
   return {
     ...productSummary(),
+    imagesByColor: {},
     colors: [
       { id: 'preto', name: 'Preto', hex: '#000000' },
       { id: 'branco', name: 'Branco', hex: '#ffffff' },

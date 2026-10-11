@@ -17,6 +17,8 @@ export const RawProductSchema = z.object({
   priceCents: z.number().int().nonnegative(),
   originalPriceCents: z.number().int().nonnegative().nullable(),
   image: z.string().url(),
+  /** Foto real da peça em cada cor, pelo id da cor. Cor sem foto fica de fora e usa a `image`. */
+  imagesByColor: z.record(z.string(), z.string().url()).optional(),
   colors: z.array(ColorSchema),
   isClothing: z.boolean(),
   models: z.array(z.string()),
@@ -36,6 +38,7 @@ export const ProductSchema = z.object({
   priceCents: z.number().int().nonnegative(),
   originalPriceCents: z.number().int().nonnegative().nullable(),
   image: z.string().url(),
+  imagesByColor: z.record(z.string(), z.string().url()),
   description: z.string(),
   colors: z.array(ColorSchema),
 
