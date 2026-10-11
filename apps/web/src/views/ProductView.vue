@@ -6,14 +6,11 @@ import { HttpError, isCancelled } from '@/services/http'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import { formatPrice } from '@/utils/format'
-import { imageUrl } from '@/utils/image'
 import { scrollMotion } from '@/utils/scroll'
-import AddToCartButton from '@/components/AddToCartButton.vue'
-import BurstSeal from '@/components/BurstSeal.vue'
 import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
 import PriceTag from '@/components/PriceTag.vue'
+import ProductBuyPanel from '@/components/ProductBuyPanel.vue'
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton.vue'
 import ProductPhoto from '@/components/ProductPhoto.vue'
 import RelatedProducts from '@/components/RelatedProducts.vue'
@@ -294,56 +291,15 @@ onBeforeUnmount(() => {
               data-test="size-selector"
             />
 
-            <!-- O botão fica num card com a miniatura, o preço e a escolha, para a pessoa conferir o que
-            vai comprar sem voltar aos seletores. -->
-            <div
-              class="relative flex items-center gap-2.5 rounded-panel border-3 border-ink bg-surface p-2 shadow-hq md:gap-3 md:p-2.5"
-              data-test="buy-box"
-            >
-              <BurstSeal
-                v-if="addedNotice"
-                label="BOA!"
-                size="sm"
-                class="pointer-events-none absolute -left-3 -top-5 z-10 motion-safe:animate-zap"
-              />
-              <span class="relative flex-none" aria-hidden="true">
-                <img
-                  :src="imageUrl(product.image, 120, { trim: true })"
-                  alt=""
-                  width="44"
-                  height="44"
-                  class="size-11 rounded-control border-2 border-ink bg-sand object-cover"
-                />
-                <span
-                  v-if="selectedColor"
-                  class="absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-ink"
-                  :style="{ backgroundColor: selectedColor.hex }"
-                />
-              </span>
-              <span
-                v-if="addedNotice"
-                class="flex min-w-0 flex-1 flex-col"
-                data-test="added-notice"
-              >
-                <span class="text-xs font-bold text-success"
-                  ><span aria-hidden="true">✓ </span>Adicionado ao carrinho</span
-                >
-                <span class="truncate font-bold">{{ addedNotice.name }}</span>
-                <span class="truncate text-xs text-muted-strong">{{ addedNotice.detail }}</span>
-              </span>
-              <span v-else class="flex min-w-0 flex-1 flex-col" data-test="buy-summary">
-                <span class="text-lg font-bold leading-tight">{{
-                  formatPrice(product.priceCents)
-                }}</span>
-                <span
-                  class="truncate text-xs font-bold"
-                  :class="choiceLine.ready ? 'text-success' : 'text-accent'"
-                  data-test="choice-line"
-                  >{{ choiceLine.text }}</span
-                >
-              </span>
-              <AddToCartButton :state="buttonState" class="flex-none" @click="onPrimaryClick" />
-            </div>
+            <ProductBuyPanel
+              :image="product.image"
+              :price-cents="product.priceCents"
+              :state="buttonState"
+              :choice="choiceLine"
+              :color-hex="selectedColor ? selectedColor.hex : undefined"
+              :notice="addedNotice"
+              @click="onPrimaryClick"
+            />
 
             <!-- No celular, a descrição fica recolhida para não afastar o resto da página; aberta, é o
             mesmo bloco mostarda do desktop. -->
