@@ -7,12 +7,15 @@ Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chi
 **Design system:** [Figma](https://www.figma.com/design/CN9BQ9cNCII6SXCTjIckSK/Penca-Store-%C2%B7-Design-System?node-id=1-4)
 
 <p align="center">
-  <img src="docs/screenshots/vitrine.jpg" alt="Página inicial com a vitrine em destaque" width="64%" />
+  <img src="docs/screenshots/catalogo.jpg" alt="Página inicial com a vitrine e os filtros por tipo, cor e ordenação" width="64%" />
   <img src="docs/screenshots/produto-mobile.jpg" alt="Página de produto no celular, logo depois de adicionar ao carrinho" width="24%" />
 </p>
 <p align="center">
   <img src="docs/screenshots/produto.jpg" alt="Página de produto no desktop, com o card de compra" width="64%" />
   <img src="docs/screenshots/relacionados-mobile.jpg" alt="Mais do ateliê no celular: outros produtos do mesmo tipo" width="24%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/carrinho.jpg" alt="Carrinho com dois itens, cada um com cor, tamanho, quantidade e preço, e o subtotal" width="64%" />
 </p>
 
 > Penca Store é um projeto de estudo, sem vínculo oficial com a Chico Rei ou a Uma Penca. As páginas têm `noindex` e o rodapé deixa isso claro para quem visita.
