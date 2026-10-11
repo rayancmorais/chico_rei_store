@@ -51,16 +51,19 @@ describe('App', () => {
   })
 })
 
-describe('menu do topo leva até a listagem', () => {
+describe('navegação pelo cabeçalho', () => {
   // Espera a resposta do MSW e o re-render do Vue.
   const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
   let scrollIntoView: ReturnType<typeof vi.fn>
+  let scrollTo: ReturnType<typeof vi.fn>
   let reduceMotion = false
 
   beforeEach(() => {
     // O jsdom não implementa rolagem nem media queries.
     scrollIntoView = vi.fn()
     Element.prototype.scrollIntoView = scrollIntoView
+    scrollTo = vi.fn()
+    vi.stubGlobal('scrollTo', scrollTo)
     reduceMotion = false
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: reduceMotion, media: query }))
   })
@@ -188,5 +191,65 @@ describe('menu do topo leva até a listagem', () => {
     expect(scrollIntoView).not.toHaveBeenCalled()
     expect(focusedId()).not.toBe('results-title')
     wrapper.destroy()
+  })
+
+  describe('logo volta ao topo da loja', () => {
+    const logo = (wrapper: Awaited<ReturnType<typeof mountApp>>['wrapper']) =>
+      wrapper.find('[data-test="brand-logo"]')
+
+    it('no catálogo sem filtro, rola até o topo', async () => {
+      const { wrapper, router } = await mountApp()
+
+      await logo(wrapper).trigger('click')
+
+      expect(router.currentRoute.fullPath).toBe('/')
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+      expect(scrollIntoView).not.toHaveBeenCalled()
+      wrapper.destroy()
+    })
+
+    it('com filtro ativo, volta para a loja sem filtros e rola até o topo', async () => {
+      const { wrapper, router } = await mountApp('/?type=moletom&color=preto')
+
+      await logo(wrapper).trigger('click')
+      await settle()
+
+      expect(router.currentRoute.fullPath).toBe('/')
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+      wrapper.destroy()
+    })
+
+    it('com movimento reduzido, pula direto para o topo', async () => {
+      reduceMotion = true
+      const { wrapper } = await mountApp()
+
+      await logo(wrapper).trigger('click')
+
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' })
+      wrapper.destroy()
+    })
+
+    it('Cmd/Ctrl+clique, que abre outra aba, não rola nem navega esta', async () => {
+      const { wrapper, router } = await mountApp('/?type=moletom')
+      const link = logo(wrapper)
+      // Sem isto, o jsdom tentaria abrir o link de verdade (e avisa que não sabe navegar).
+      link.element.addEventListener('click', (event) => event.preventDefault())
+
+      await link.trigger('click', { metaKey: true })
+
+      expect(router.currentRoute.fullPath).toBe('/?type=moletom')
+      expect(scrollTo).not.toHaveBeenCalled()
+      wrapper.destroy()
+    })
+
+    it('na página de produto, só navega: a volta ao topo fica com o scrollBehavior do router', async () => {
+      const { wrapper, router } = await mountApp('/produto/cam-1')
+
+      await logo(wrapper).trigger('click')
+
+      expect(router.currentRoute.fullPath).toBe('/')
+      expect(scrollTo).not.toHaveBeenCalled()
+      wrapper.destroy()
+    })
   })
 })

@@ -8,6 +8,7 @@ import { useListingReveal } from '@/composables/useListingReveal'
 import { useProductFilters } from '@/composables/useProductFilters'
 import { DEFAULT_SORT, type CatalogQuery } from '@/utils/catalog-query'
 import { pluralize, pluralTypeLabel } from '@/utils/format'
+import { scrollMotion } from '@/utils/scroll'
 import ActiveFilters from '@/components/ActiveFilters.vue'
 import CatalogHero from '@/components/CatalogHero.vue'
 import ProductCard from '@/components/ProductCard.vue'
@@ -136,8 +137,7 @@ function retry() {
 
 /** Leva a pessoa até a listagem e o foco até o título, para o leitor de tela anunciar a troca. */
 function revealListing() {
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  results.value?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  results.value?.scrollIntoView({ behavior: scrollMotion(), block: 'start' })
   // Sem `preventScroll`, o foco pularia direto para o título e cortaria a rolagem suave.
   resultsTitle.value?.focus({ preventScroll: true })
 }
