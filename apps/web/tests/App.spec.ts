@@ -38,6 +38,11 @@ describe('App', () => {
     expect(button.find('[data-test="cart-count"]').text()).toBe('2')
     expect(button.attributes('aria-label')).toBe('Abrir carrinho, 2 itens')
 
+    // O símbolo é decorativo: o nome acessível do logo vem do link.
+    const logo = wrapper.find('[data-test="brand-logo"]')
+    expect(logo.attributes('aria-label')).toBe('Penca Store, página inicial')
+    expect(logo.attributes('href')).toBe('/')
+
     await button.trigger('click')
     expect(wrapper.find('[data-test="cart-drawer"]').exists()).toBe(true)
   })

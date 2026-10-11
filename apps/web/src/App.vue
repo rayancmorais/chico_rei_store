@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router/composables'
 import { useCartStore } from '@/stores/cart'
 import { pluralize } from '@/utils/format'
+import BrandLogo from '@/components/BrandLogo.vue'
 import CartDrawer from '@/components/CartDrawer.vue'
 
 const cart = useCartStore()
@@ -41,21 +42,7 @@ watch(
   <div class="flex min-h-screen flex-col">
     <header class="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-12">
-        <router-link
-          :to="{ name: 'catalog' }"
-          class="flex items-center gap-3 rounded-control focus-ring-lg"
-        >
-          <span
-            class="flex h-10 w-10 items-center justify-center rounded-pill bg-accent font-display text-[15px] text-surface"
-            aria-hidden="true"
-          >
-            PS
-          </span>
-          <span class="flex flex-col leading-none">
-            <span class="whitespace-nowrap font-display text-title-sm">Penca Store</span>
-            <span class="mt-1 hidden text-[11px] text-muted md:block">armazém de estampas</span>
-          </span>
-        </router-link>
+        <BrandLogo />
 
         <nav
           aria-label="Categorias"
