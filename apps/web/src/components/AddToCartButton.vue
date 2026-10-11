@@ -20,12 +20,12 @@ const emit = defineEmits<{ (event: 'click'): void }>()
          o que falta escolher. -->
     <button
       type="button"
-      class="flex w-full flex-col items-center justify-center gap-0.5 rounded-panel border-ink font-bold transition-[transform,box-shadow] duration-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+      class="flex w-full flex-col items-center justify-center gap-0.5 rounded-panel border-ink font-bold transition-[transform,box-shadow] duration-100 focus-ring-lg"
       :class="
         state === 'blocked'
           ? 'h-[62px] cursor-not-allowed border-2.5 border-dashed bg-[#EDE4D5]'
           : [
-              'h-[58px] border-3 text-base text-surface shadow-hq hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#2A1F17] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#2A1F17]',
+              'h-[58px] border-3 text-base text-surface shadow-hq hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hq-raised active:translate-x-[3px] active:translate-y-[3px] active:shadow-hq-press',
               state === 'added'
                 ? 'bg-success motion-safe:animate-pop'
                 : 'bg-accent hover:bg-accent-hover',

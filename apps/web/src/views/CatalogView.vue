@@ -116,7 +116,7 @@ watch(query, load, { immediate: true })
 
     <FilterPanel
       v-if="filters"
-      class="sticky top-[72px] z-20 mb-1 mt-6 hidden md:block"
+      class="sticky top-[calc(theme(spacing.header)+3px)] z-20 mb-1 mt-6 hidden md:block"
       :filters="filters"
       :selected-types="query.type"
       :selected-colors="query.color"

@@ -43,7 +43,7 @@ watch(
       <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-12">
         <router-link
           :to="{ name: 'catalog' }"
-          class="flex items-center gap-3 rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+          class="flex items-center gap-3 rounded-control focus-ring-lg"
         >
           <span
             class="flex h-10 w-10 items-center justify-center rounded-pill bg-accent font-display text-[15px] text-surface"
@@ -75,7 +75,7 @@ watch(
 
         <button
           type="button"
-          class="flex h-11 items-center gap-2.5 rounded-pill bg-ink pl-4.5 pr-2 text-sm text-surface transition-colors hover:bg-[#43342A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          class="flex h-11 items-center gap-2.5 rounded-pill bg-ink pl-4.5 pr-2 text-sm text-surface transition-colors hover:bg-[#43342A] focus-ring"
           :aria-label="cartLabel"
           aria-haspopup="dialog"
           data-test="open-cart"

@@ -46,7 +46,7 @@ watch(
 </script>
 
 <template>
-  <div class="rounded-panel border-3 border-ink bg-surface shadow-[6px_6px_0_#2A1F17]">
+  <div class="rounded-panel border-3 border-ink bg-surface shadow-hq-raised">
     <div class="flex items-center border-b-2 border-ink py-3 pl-3.5 pr-2">
       <FilterChip
         label="Tudo"
@@ -84,7 +84,7 @@ watch(
         >
           <button
             type="button"
-            class="pointer-events-auto flex h-[38px] items-center rounded-panel border-2 border-ink bg-white px-3 text-sm font-bold shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="pointer-events-auto flex h-[38px] items-center rounded-panel border-2 border-ink bg-white px-3 text-sm font-bold shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-ring"
             aria-label="Ver tipos anteriores"
             data-test="types-back"
             @click="scrollBack"
@@ -98,7 +98,7 @@ watch(
         >
           <button
             type="button"
-            class="pointer-events-auto flex h-[38px] items-center gap-1.5 rounded-panel border-2 border-ink bg-accent pl-2 pr-3 text-sm font-bold text-surface shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="pointer-events-auto flex h-[38px] items-center gap-1.5 rounded-panel border-2 border-ink bg-accent pl-2 pr-3 text-sm font-bold text-surface shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-ring"
             :aria-label="forwardLabel"
             data-test="types-forward"
             @click="scrollForward"

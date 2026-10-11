@@ -15,7 +15,7 @@ const range = computed(() => rangeLabel(props.page, props.pageSize, props.total)
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="h-[46px] rounded-control border-2.5 border-ink bg-white px-4 text-sm font-semibold text-ink shadow-[3px_3px_0_#2A1F17] transition-transform active:translate-x-0.5 active:translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:border-dashed disabled:border-[#B8A991] disabled:bg-transparent disabled:text-muted disabled:shadow-none"
+        class="h-[46px] rounded-control border-2.5 border-ink bg-white px-4 text-sm font-semibold text-ink shadow-hq-md transition-transform active:translate-x-0.5 active:translate-y-0.5 focus-ring disabled:cursor-not-allowed disabled:border-dashed disabled:border-line-strong disabled:bg-transparent disabled:text-muted disabled:shadow-none"
         :disabled="page <= 1"
         data-test="prev-page"
         @click="emit('change', page - 1)"
@@ -29,7 +29,7 @@ const range = computed(() => rangeLabel(props.page, props.pageSize, props.total)
           <button
             v-else
             type="button"
-            class="h-[46px] w-[46px] rounded-control border-2.5 border-ink text-[15px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="h-[46px] w-[46px] rounded-control border-2.5 border-ink text-[15px] font-bold focus-ring"
             :class="
               item === page
                 ? 'bg-ink text-surface shadow-hq-accent'
@@ -51,7 +51,7 @@ const range = computed(() => rangeLabel(props.page, props.pageSize, props.total)
 
       <button
         type="button"
-        class="h-[46px] rounded-control border-2.5 border-ink bg-accent px-4 text-sm font-bold text-surface shadow-[3px_3px_0_#2A1F17] transition-transform active:translate-x-0.5 active:translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:border-dashed disabled:border-[#B8A991] disabled:bg-transparent disabled:font-semibold disabled:text-muted disabled:shadow-none"
+        class="h-[46px] rounded-control border-2.5 border-ink bg-accent px-4 text-sm font-bold text-surface shadow-hq-md transition-transform active:translate-x-0.5 active:translate-y-0.5 focus-ring disabled:cursor-not-allowed disabled:border-dashed disabled:border-line-strong disabled:bg-transparent disabled:font-semibold disabled:text-muted disabled:shadow-none"
         :disabled="page >= totalPages"
         data-test="next-page"
         @click="emit('change', page + 1)"

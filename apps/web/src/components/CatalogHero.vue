@@ -65,7 +65,7 @@ const frames = computed(() =>
           >
             Arte de gente daqui,<br />
             <span
-              class="mt-1.5 inline-block -rotate-[1.5deg] rounded-control border-2.5 border-ink bg-accent px-2.5 pb-1 text-surface shadow-[3px_3px_0_#2A1F17] md:mt-2.5 md:border-3 md:px-3.5 md:pb-1.5 md:shadow-hq"
+              class="mt-1.5 inline-block -rotate-[1.5deg] rounded-control border-2.5 border-ink bg-accent px-2.5 pb-1 text-surface shadow-hq-md md:mt-2.5 md:border-3 md:px-3.5 md:pb-1.5 md:shadow-hq"
             >
               no tecido!
             </span>
@@ -91,7 +91,7 @@ const frames = computed(() =>
             <router-link
               v-if="frame.product"
               :to="{ name: 'product', params: { id: frame.product.id } }"
-              class="absolute inset-0 overflow-hidden rounded-control border-3 border-ink bg-sand shadow-[5px_5px_0_#2A1F17] transition-[transform,box-shadow] duration-200 group-hover:-translate-x-[3px] group-hover:-translate-y-[3px] group-hover:shadow-hq-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+              class="absolute inset-0 overflow-hidden rounded-control border-3 border-ink bg-sand shadow-hq-frame transition-[transform,box-shadow] duration-200 group-hover:-translate-x-[3px] group-hover:-translate-y-[3px] group-hover:shadow-hq-hover focus-ring-lg"
               :class="frame.tilt"
             >
               <img
@@ -110,7 +110,7 @@ const frames = computed(() =>
             </router-link>
             <span
               v-else
-              class="absolute inset-0 rounded-control border-3 border-ink bg-sand shadow-[5px_5px_0_#2A1F17]"
+              class="absolute inset-0 rounded-control border-3 border-ink bg-sand shadow-hq-frame"
               aria-hidden="true"
             />
             <BurstSeal

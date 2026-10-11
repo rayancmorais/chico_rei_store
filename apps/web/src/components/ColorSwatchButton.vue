@@ -18,7 +18,7 @@ const isDisabled = computed(() => props.count === 0 && !props.pressed)
 <template>
   <button
     type="button"
-    class="flex flex-col items-center gap-1.5 rounded-pill text-[11px] text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink disabled:cursor-not-allowed"
+    class="flex flex-col items-center gap-1.5 rounded-pill text-[11px] text-ink focus-ring-lg disabled:cursor-not-allowed"
     :title="`${color.name} (${count})`"
     :aria-label="`${color.name}, ${pluralize(count, 'produto', 'produtos')}`"
     :aria-pressed="pressed ? 'true' : 'false'"

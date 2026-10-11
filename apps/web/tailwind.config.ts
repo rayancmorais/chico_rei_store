@@ -10,8 +10,9 @@ export default {
         surface: '#F7F2E9',
         ink: '#2A1F17',
         muted: '#6B5B4D',
-        line: '#D9CDB9',
+        line: { DEFAULT: '#D9CDB9', strong: '#B8A991' },
         sand: '#E6DCCB',
+        skeleton: '#E0D4C1',
         accent: { DEFAULT: '#A9472A', hover: '#8E3A21', soft: '#FBEDE6' },
         // Mostarda só passa no contraste com texto `ink`.
         mustard: '#E3A93B',
@@ -36,14 +37,22 @@ export default {
       borderRadius: { panel: '8px', control: '6px', chip: '5px', pill: '999px' },
       borderWidth: { 2.5: '2.5px', 3: '3px' },
       boxShadow: {
+        // Sombra sólida "de HQ". `press` é o estado afundado do clique; `raised`, o do hover.
+        'hq-press': '1px 1px 0 #2A1F17',
         'hq-sm': '2px 2px 0 #2A1F17',
+        'hq-md': '3px 3px 0 #2A1F17',
         hq: '4px 4px 0 #2A1F17',
+        'hq-frame': '5px 5px 0 #2A1F17',
+        'hq-raised': '6px 6px 0 #2A1F17',
         'hq-lg': '8px 8px 0 #2A1F17',
+        // O carrinho entra pela direita, então a sombra cai para a esquerda.
+        'hq-drawer': '-6px 6px 0 #2A1F17',
         'hq-accent': '4px 4px 0 #A9472A',
         'hq-hover': '9px 9px 0 #A9472A',
         'ring-accent': '0 0 0 3px #F7F2E9, 0 0 0 6px #A9472A',
       },
-      spacing: { 4.5: '18px', 13: '52px', 15: '60px' },
+      // `header`: altura do cabeçalho fixo (py-3 + botão de 44px + borda), para o que gruda abaixo dele.
+      spacing: { 4.5: '18px', 13: '52px', 15: '60px', header: '69px' },
       backgroundImage: {
         halftone: 'radial-gradient(#2A1F17 1.1px, transparent 1.5px)',
         'halftone-accent': 'radial-gradient(#A9472A 1.2px, transparent 1.6px)',

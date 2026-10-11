@@ -42,7 +42,7 @@ const chips = computed(() => [
       v-for="chip in chips"
       :key="chip.key"
       type="button"
-      class="flex h-[30px] items-center gap-2 rounded-control border-2 border-ink bg-accent pl-2.5 pr-1 text-[13px] font-medium text-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      class="flex h-[30px] items-center gap-2 rounded-control border-2 border-ink bg-accent pl-2.5 pr-1 text-[13px] font-medium text-surface focus-ring"
       :aria-label="`Remover filtro ${chip.label}`"
       @click="chip.remove"
     >
