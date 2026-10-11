@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { ProductSummary } from '@chico_rei_store/shared'
 import BurstSeal from '@/components/BurstSeal.vue'
 import { formatPrice } from '@/utils/format'
+import { pickHeroProducts } from '@/utils/hero-picks'
 import { imageUrl } from '@/utils/image'
 
 // `total` opcional, e não `number | null`: o Vue 2.7 não sabe validar `null` em props tipadas.
@@ -10,7 +11,7 @@ const props = defineProps<{ products: ProductSummary[]; total?: number }>()
 
 const emit = defineEmits<{ (event: 'shop'): void }>()
 
-const HIGHLIGHTS = ['Artistas independentes', 'Impresso sob demanda', 'Vitrine de umapenca.com']
+const HIGHLIGHTS = ['Impresso sob demanda', 'Cores e tamanhos à escolha', 'Vitrine de umapenca.com']
 
 // O selo do quadro grande fica sempre visível, então só diz o que vale para todas as peças: a
 // API não tem dado de vendas para sustentar um "Mais vendida". Os outros aparecem só no hover.
@@ -41,9 +42,10 @@ const FRAMES = [
   },
 ] as const
 
-const frames = computed(() =>
-  FRAMES.map((frame, index) => ({ ...frame, product: props.products[index] ?? null })),
-)
+const frames = computed(() => {
+  const picks = pickHeroProducts(props.products, FRAMES.length)
+  return FRAMES.map((frame, index) => ({ ...frame, product: picks[index] ?? null }))
+})
 </script>
 
 <template>
@@ -70,7 +72,7 @@ const frames = computed(() =>
             </span>
           </h1>
           <p class="max-w-sm text-sm text-ink-soft [text-wrap:balance] md:text-lg">
-            Estampas de artistas independentes brasileiros, impressas sob demanda.
+            Criações de artistas independentes brasileiros, de camisetas a moletons.
           </p>
           <button type="button" class="btn-hq-accent hidden md:inline-flex" @click="emit('shop')">
             Ver camisetas →

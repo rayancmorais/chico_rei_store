@@ -105,7 +105,7 @@ npm run preview -w @chico_rei_store/web     # terminal 2: front compilado em htt
 ### Qualidade e testes
 
 ```bash
-npm test             # 193 testes unitários e de componentes (API 44, scraper 30, web 119)
+npm test             # 201 testes unitários e de componentes (API 44, scraper 30, web 127)
 npm run typecheck    # TypeScript em todos os pacotes, incluindo os .vue (vue-tsc)
 npm run lint         # ESLint
 ```
@@ -219,7 +219,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Testes**
 
-- 193 testes com Vitest (API 44, scraper 30, web 119): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
+- 201 testes com Vitest (API 44, scraper 30, web 127): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
 - Nos testes, qualquer aviso do Vue vira erro. Isso já pegou props com tipo errado que só apareceriam como um aviso no console.
 
 **Deploy**
