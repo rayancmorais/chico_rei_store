@@ -5,11 +5,11 @@ import type { Product } from '@chico_rei_store/shared'
 import { fetchProduct } from '@/services/api'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
-import { formatPrice } from '@/utils/format'
-import BurstSeal from '@/components/BurstSeal.vue'
+import AddToCartButton from '@/components/AddToCartButton.vue'
 import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
 import PriceTag from '@/components/PriceTag.vue'
+import ProductDetailSkeleton from '@/components/ProductDetailSkeleton.vue'
 import ProductGallery from '@/components/ProductGallery.vue'
 import RelatedProducts from '@/components/RelatedProducts.vue'
 import SizeSelector from '@/components/SizeSelector.vue'
@@ -44,9 +44,13 @@ const missingChoice = computed(() => {
   if (colorPending.value && sizePending.value) return 'Escolha a cor e o tamanho'
   if (colorPending.value) return 'Escolha a cor'
   if (sizePending.value) return 'Escolha o tamanho'
-  return null
+  return undefined
 })
-const canAddToCart = computed(() => missingChoice.value === null)
+const canAddToCart = computed(() => missingChoice.value === undefined)
+const buttonState = computed(() => {
+  if (!canAddToCart.value) return 'blocked'
+  return justAdded.value ? 'added' : 'ready'
+})
 const wasEnriched = computed(
   () =>
     product.value !== null && (product.value.enriched.sizes || product.value.enriched.description),
@@ -64,10 +68,7 @@ async function load() {
   const signal = request.start()
   status.value = 'loading'
   product.value = null
-  selectedColorId.value = null
-  selectedSize.value = null
-  justAdded.value = false
-  triedToAdd.value = false
+  resetSelection()
 
   try {
     const data = await fetchProduct(props.id, signal)
@@ -83,8 +84,13 @@ async function load() {
   }
 }
 
-// O botão bloqueado continua clicável (aria-disabled): o clique mostra o que falta e leva o
-// foco até lá, em vez de não fazer nada como um `disabled` faria.
+function resetSelection() {
+  selectedColorId.value = null
+  selectedSize.value = null
+  justAdded.value = false
+  triedToAdd.value = false
+}
+
 function pointToMissingChoice() {
   triedToAdd.value = true
   shaking.value = true
@@ -146,32 +152,7 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
       </template>
     </nav>
 
-    <div
-      v-if="status === 'loading'"
-      class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
-      aria-busy="true"
-      data-test="loading"
-    >
-      <span class="sr-only" role="status">Carregando produto…</span>
-      <div
-        class="relative aspect-[4/5] overflow-hidden rounded-panel border-3 border-ink bg-sand shadow-hq md:shadow-hq-lg"
-        aria-hidden="true"
-      >
-        <span
-          class="absolute inset-0 bg-[linear-gradient(100deg,transparent_30%,rgba(255,255,255,.55)_50%,transparent_70%)] bg-[length:200%_100%] motion-safe:animate-shimmer"
-        />
-      </div>
-      <div
-        class="flex flex-col gap-4 rounded-panel border-3 border-ink bg-surface p-6 shadow-hq md:shadow-hq-lg"
-        aria-hidden="true"
-      >
-        <div class="h-3 w-24 rounded-pill bg-[#E0D4C1]" />
-        <div class="h-10 w-4/5 rounded-pill bg-[#E0D4C1]" />
-        <div class="h-7 w-28 rounded-pill bg-[#E0D4C1]" />
-        <div class="h-24 rounded-panel bg-[#E0D4C1]" />
-        <div class="h-14 rounded-panel bg-[#E0D4C1]" />
-      </div>
-    </div>
+    <ProductDetailSkeleton v-if="status === 'loading'" />
 
     <FeedbackState
       v-else-if="status === 'not-found'"
@@ -243,48 +224,12 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
               data-test="size-selector"
             />
 
-            <div class="relative">
-              <button
-                type="button"
-                class="flex w-full flex-col items-center justify-center gap-0.5 rounded-panel border-ink font-bold transition-[transform,box-shadow] duration-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-                :class="
-                  canAddToCart
-                    ? [
-                        'h-[58px] border-3 text-base text-surface shadow-hq hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#2A1F17] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#2A1F17]',
-                        justAdded
-                          ? 'bg-success motion-safe:animate-pop'
-                          : 'bg-accent hover:bg-accent-hover',
-                      ]
-                    : 'h-[62px] cursor-not-allowed border-2.5 border-dashed bg-[#EDE4D5]'
-                "
-                :aria-disabled="canAddToCart ? undefined : 'true'"
-                data-test="add-to-cart"
-                @click="onPrimaryClick"
-              >
-                <template v-if="!canAddToCart">
-                  <span class="text-[15px]">Adicionar ao carrinho</span>
-                  <span class="text-sm font-semibold text-accent">
-                    <span aria-hidden="true">↑ </span>
-                    <span data-test="missing-choice">{{ missingChoice }}</span>
-                  </span>
-                </template>
-                <template v-else-if="justAdded">
-                  <span><span aria-hidden="true">✓ </span>Adicionado · Ver carrinho →</span>
-                </template>
-                <template v-else>
-                  <span>Adicionar ao carrinho — {{ formatPrice(product.priceCents) }}</span>
-                </template>
-              </button>
-              <BurstSeal
-                v-if="justAdded"
-                label="BOA!"
-                size="sm"
-                class="pointer-events-none absolute -right-3 -top-9 motion-safe:animate-zap md:-right-5"
-              />
-              <p class="sr-only" role="status" :data-test="justAdded ? 'added' : undefined">
-                {{ justAdded ? 'Adicionado ao carrinho' : '' }}
-              </p>
-            </div>
+            <AddToCartButton
+              :state="buttonState"
+              :price-cents="product.priceCents"
+              :missing-choice="missingChoice"
+              @click="onPrimaryClick"
+            />
 
             <section
               class="relative mt-2 rounded-[4px] border-2.5 border-ink bg-mustard px-4 pb-3.5 pt-4"
