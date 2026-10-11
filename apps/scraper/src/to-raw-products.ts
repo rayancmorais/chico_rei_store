@@ -23,6 +23,27 @@ function uniqueColorsOf(product: SourceProduct): Color[] {
   return [...new Map(colors.map((color) => [color.id, color])).values()]
 }
 
+// A vitrine traz uma foto por tecido e modelo. Fica a do mesmo modelo da capa, para a peça manter o
+// enquadramento ao trocar de cor; outro modelo só entra se esse não tiver a cor.
+function imagesByColorOf(product: SourceProduct): Record<string, string> {
+  const colorIdOf = new Map(
+    product.fabrics.map((fabric) => [fabric.color_id, slugify(fabric.product_color_name)]),
+  )
+  const isCoverModel = (modelId: number | null) => modelId === product.img_cover_model
+  const photos = product.images_by_fabric
+    .filter((image) => image.product_model_id !== null)
+    .sort(
+      (a, b) => Number(isCoverModel(b.product_model_id)) - Number(isCoverModel(a.product_model_id)),
+    )
+
+  const images: Record<string, string> = {}
+  for (const photo of photos) {
+    const colorId = colorIdOf.get(photo.color_id)
+    if (colorId && !(colorId in images)) images[colorId] = photo.url
+  }
+  return images
+}
+
 export function toRawProduct(product: SourceProduct): RawProduct {
   return {
     sourceId: String(product.id),
@@ -32,6 +53,7 @@ export function toRawProduct(product: SourceProduct): RawProduct {
     priceCents: toCents(product.price),
     originalPriceCents: product.price_old > product.price ? toCents(product.price_old) : null,
     image: product.img_cover,
+    imagesByColor: imagesByColorOf(product),
     colors: uniqueColorsOf(product),
     isClothing: product.is_clothing,
     models: product.models.map((model) => model.name),

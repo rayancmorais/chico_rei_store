@@ -5,12 +5,15 @@ import { fetchProduct } from '@/services/api'
 import { HttpError, isCancelled } from '@/services/http'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
-import AddToCartButton from '@/components/AddToCartButton.vue'
+import { useMediaQuery } from '@/composables/useMediaQuery'
+import { mediaFrom } from '@/config/breakpoints'
+import { scrollMotion } from '@/utils/scroll'
 import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
 import PriceTag from '@/components/PriceTag.vue'
+import ProductBuyPanel from '@/components/ProductBuyPanel.vue'
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton.vue'
-import ProductGallery from '@/components/ProductGallery.vue'
+import ProductPhoto from '@/components/ProductPhoto.vue'
 import RelatedProducts from '@/components/RelatedProducts.vue'
 import SizeSelector from '@/components/SizeSelector.vue'
 
@@ -19,6 +22,8 @@ const props = defineProps<{ id: string }>()
 type Status = 'loading' | 'success' | 'error' | 'not-found'
 
 const SHAKE_MS = 500
+// Tempo do estado "adicionado" (selo BOA! e "Ver carrinho"): depois, o botão volta a "Adicionar".
+const ADDED_STATE_MS = 3000
 
 const cart = useCartStore()
 
@@ -31,22 +36,43 @@ const justAdded = ref(false)
 const triedToAdd = ref(false)
 const shaking = ref(false)
 
+// Do tablet para cima, foto e informações ficam lado a lado, num card; no celular, empilhadas e
+// sem moldura. Decide só o que muda no DOM; o resto são classes responsivas.
+const twoColumns = useMediaQuery(mediaFrom('md'))
+
 const colorSelector = ref<InstanceType<typeof ColorSelector> | null>(null)
 const sizeSelector = ref<InstanceType<typeof SizeSelector> | null>(null)
 
 const selectedColor = computed(
   () => product.value?.colors.find((color) => color.id === selectedColorId.value) ?? null,
 )
+// A peça na cor escolhida, quando a fonte tem essa foto; sem cor escolhida (ou sem foto), a capa.
+const photo = computed(() => {
+  if (!product.value) return ''
+  const colorPhoto = selectedColor.value && product.value.imagesByColor[selectedColor.value.id]
+  return colorPhoto || product.value.image
+})
 const needsSize = computed(() => (product.value?.sizes.length ?? 0) > 0)
 const colorPending = computed(() => selectedColor.value === null)
 const sizePending = computed(() => needsSize.value && selectedSize.value === null)
-const missingChoice = computed(() => {
-  if (colorPending.value && sizePending.value) return 'Escolha a cor e o tamanho'
-  if (colorPending.value) return 'Escolha a cor'
-  if (sizePending.value) return 'Escolha o tamanho'
-  return undefined
+const canAddToCart = computed(() => !colorPending.value && !sizePending.value)
+const chosenVariant = computed(() => {
+  const color = selectedColor.value?.name ?? ''
+  return needsSize.value && selectedSize.value ? `${color} · Tam. ${selectedSize.value}` : color
 })
-const canAddToCart = computed(() => missingChoice.value === undefined)
+const choiceLine = computed(() => {
+  if (colorPending.value && sizePending.value) return { ready: false, text: 'Falta cor e tamanho' }
+  if (colorPending.value) return { ready: false, text: 'Falta a cor' }
+  if (sizePending.value) return { ready: false, text: 'Falta o tamanho' }
+  return { ready: true, text: chosenVariant.value }
+})
+
+const addedNotice = computed(() =>
+  justAdded.value && product.value
+    ? { name: product.value.name, detail: chosenVariant.value }
+    : undefined,
+)
+let addedTimer: ReturnType<typeof setTimeout> | undefined
 const buttonState = computed(() => {
   if (!canAddToCart.value) return 'blocked'
   return justAdded.value ? 'added' : 'ready'
@@ -98,18 +124,30 @@ function pointToMissingChoice() {
     shaking.value = false
   }, SHAKE_MS)
 
-  const firstPending = colorPending.value ? colorSelector : sizeSelector
-  firstPending.value?.focus()
+  // Rolagem explícita, e não a do foco: respeita o movimento reduzido e o `scroll-mt` do grupo, que
+  // desconta o cabeçalho fixo. `nearest` não mexe na tela se o grupo já estiver visível.
+  const firstPending = (colorPending.value ? colorSelector : sizeSelector).value
+  const pendingGroup = firstPending?.$el as HTMLElement | undefined
+  pendingGroup?.scrollIntoView({ block: 'nearest', behavior: scrollMotion() })
+  firstPending?.focus({ preventScroll: true })
 }
 
 function addToCart() {
   if (!product.value || !selectedColor.value) return
-  cart.add(product.value, {
-    color: selectedColor.value,
-    size: needsSize.value ? selectedSize.value : null,
-  })
+  cart.add(
+    { ...product.value, image: photo.value },
+    {
+      color: selectedColor.value,
+      size: needsSize.value ? selectedSize.value : null,
+    },
+  )
+  // O carrinho não abre sozinho: quem quer continuar escolhendo não é interrompido nem tem o foco
+  // levado para um diálogo que não abriu. O botão vira "Ver carrinho" e o contador do cabeçalho sobe.
   justAdded.value = true
-  cart.open()
+  clearTimeout(addedTimer)
+  addedTimer = setTimeout(() => {
+    justAdded.value = false
+  }, ADDED_STATE_MS)
 }
 
 // Um botão só, que muda de estado: assim o foco volta para ele quando o carrinho fecha.
@@ -125,12 +163,20 @@ watch(() => props.id, load, { immediate: true })
 watch([selectedColorId, selectedSize], () => {
   justAdded.value = false
 })
-onBeforeUnmount(() => clearTimeout(shakeTimer))
+watch(justAdded, (added) => {
+  if (!added) clearTimeout(addedTimer)
+})
+onBeforeUnmount(() => {
+  clearTimeout(shakeTimer)
+  clearTimeout(addedTimer)
+})
 </script>
 
 <template>
   <main class="mx-auto max-w-7xl px-4 pb-24 md:px-12">
+    <!-- No celular, o caminho vira o botão Voltar sobre a foto; sem foto (erro), ele continua. -->
     <nav
+      v-if="twoColumns || status === 'error'"
       aria-label="Navegação estrutural"
       class="flex items-center gap-2 py-4 text-sm font-semibold md:py-6"
     >
@@ -179,30 +225,63 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
     </FeedbackState>
 
     <template v-else-if="product">
+      <!-- `grid-cols-1` (coluna `minmax(0, 1fr)`): sem ele, a coluna cresce até caber a linha de
+      cores, que não quebra, e a página passa da largura do celular. -->
       <article
-        class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
+        class="grid grid-cols-1 items-start gap-3 md:grid-cols-[1.1fr_1fr] md:gap-12 lg:grid-cols-[auto_minmax(0,1fr)]"
         data-test="product"
       >
-        <ProductGallery :image="product.image" :name="product.name" :code="product.id" />
+        <!-- No notebook, a foto inteira cabe na tela abaixo do cabeçalho e fica parada enquanto as
+        informações rolam. A largura é limitada pela altura da tela para manter a proporção 4:5:
+        7rem é o espaço do caminho de navegação acima da foto mais um respiro embaixo, e 37.5rem
+        (600 px) é a largura que a coluna da foto já tinha antes desse limite. -->
+        <ProductPhoto
+          :image="photo"
+          :name="product.name"
+          class="-mx-4 md:mx-0 lg:sticky lg:top-[calc(theme(spacing.header)+1.5rem)] lg:w-[min(calc((100vh-theme(spacing.header)-7rem)*0.8),37.5rem)]"
+        >
+          <router-link
+            v-if="!twoColumns"
+            :to="{ name: 'catalog' }"
+            class="btn-hq-icon absolute left-3 top-3 bg-white text-lg"
+            aria-label="Voltar para a loja"
+            data-test="back-to-store"
+          >
+            <span aria-hidden="true">←</span>
+          </router-link>
+        </ProductPhoto>
 
+        <!-- No tablet, quando a foto é mais alta que as informações, o painel acompanha a rolagem;
+        no desktop quem fica parada é a foto, então o painel volta a rolar. -->
         <div
-          class="flex flex-col overflow-hidden rounded-panel border-3 border-ink bg-surface shadow-hq md:sticky md:top-24 md:shadow-hq-lg"
+          class="flex flex-col md:sticky md:top-24 md:overflow-hidden md:rounded-panel md:border-3 md:border-ink md:bg-surface md:shadow-hq-lg lg:static"
         >
           <div
+            v-if="twoColumns"
             class="flex items-center justify-between gap-3 border-b-3 border-ink bg-mustard px-5 py-3 md:px-7"
           >
             <span class="text-eyebrow uppercase">{{ product.type.label }}</span>
             <span class="text-xs font-semibold">Nº {{ product.id }}</span>
           </div>
 
-          <div class="flex flex-col gap-7 px-5 pb-7 pt-6 md:px-7">
-            <div class="flex flex-col gap-3">
-              <h1
-                class="text-balance font-display text-[32px] leading-[1.06] tracking-[-0.02em] md:text-[40px]"
+          <div class="flex flex-col gap-2 md:gap-4 md:px-6 md:py-5">
+            <div class="flex flex-col gap-1">
+              <p
+                v-if="!twoColumns"
+                class="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[0.12em]"
+                data-test="product-meta"
               >
-                {{ product.name }}
-              </h1>
-              <PriceTag :product="product" size="lg" />
+                <span class="text-accent">{{ product.type.label }}</span>
+                <span>Nº {{ product.id }}</span>
+              </p>
+              <div class="flex items-start justify-between gap-3">
+                <h1
+                  class="min-w-0 text-balance font-display text-[20px] leading-[1.15] tracking-[-0.02em] md:text-[28px]"
+                >
+                  {{ product.name }}
+                </h1>
+                <PriceTag :product="product" size="lg" class="flex-none whitespace-nowrap" />
+              </div>
             </div>
 
             <ColorSelector
@@ -210,6 +289,7 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
               v-model="selectedColorId"
               :colors="product.colors"
               :pending="highlight.color"
+              class="scroll-mt-[calc(theme(spacing.header)+1rem)]"
               :class="{ 'motion-safe:animate-shake': shaking && highlight.color }"
               data-test="color-selector"
             />
@@ -219,33 +299,58 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
               v-model="selectedSize"
               :sizes="product.sizes"
               :pending="highlight.size"
+              class="scroll-mt-[calc(theme(spacing.header)+1rem)]"
               :class="{ 'motion-safe:animate-shake': shaking && highlight.size }"
               data-test="size-selector"
             />
 
-            <AddToCartButton
-              :state="buttonState"
+            <ProductBuyPanel
+              :image="photo"
               :price-cents="product.priceCents"
-              :missing-choice="missingChoice"
+              :state="buttonState"
+              :choice="choiceLine"
+              :color-hex="selectedColor ? selectedColor.hex : undefined"
+              :notice="addedNotice"
               @click="onPrimaryClick"
             />
 
-            <section
-              class="relative mt-2 rounded-[4px] border-2.5 border-ink bg-mustard px-4 pb-3.5 pt-4"
-              aria-labelledby="about-title"
+            <!-- No celular, a descrição fica recolhida para não afastar o resto da página; aberta, é o
+            mesmo bloco mostarda do desktop. -->
+            <component
+              :is="twoColumns ? 'section' : 'details'"
+              :class="twoColumns ? 'relative mt-2' : 'group border-y-2 border-ink'"
+              :aria-labelledby="twoColumns ? 'about-title' : undefined"
+              data-test="about"
             >
               <h2
+                v-if="twoColumns"
                 id="about-title"
                 class="absolute -top-3 left-3 rounded-[4px] border-2 border-ink bg-surface px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]"
               >
                 Sobre a peça
               </h2>
-              <p class="text-pretty text-sm leading-relaxed">{{ product.description }}</p>
-              <p v-if="wasEnriched" class="mt-3 text-xs" data-test="enriched-note">
-                A listagem da loja original não traz todos os dados deste produto; os que faltavam
-                (como tamanhos e descrição) foram gerados para a demonstração.
-              </p>
-            </section>
+              <summary
+                v-else
+                class="flex h-13 cursor-pointer list-none items-center justify-between text-eyebrow uppercase focus-ring [&::-webkit-details-marker]:hidden"
+              >
+                Sobre a peça
+                <span
+                  class="text-2xl leading-none motion-safe:transition-transform group-open:rotate-45"
+                  aria-hidden="true"
+                  >+</span
+                >
+              </summary>
+              <div
+                class="rounded-[4px] border-2.5 border-ink bg-mustard px-4"
+                :class="twoColumns ? 'pb-3.5 pt-4' : 'mb-3 py-3.5'"
+              >
+                <p class="text-pretty text-sm leading-relaxed">{{ product.description }}</p>
+                <p v-if="wasEnriched" class="mt-3 text-xs" data-test="enriched-note">
+                  A listagem da loja original não traz todos os dados deste produto; os que faltavam
+                  (como tamanhos e descrição) foram gerados para a demonstração.
+                </p>
+              </div>
+            </component>
 
             <a
               :href="product.sourceUrl"

@@ -1,7 +1,17 @@
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
+const amount = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 export function formatPrice(cents: number) {
   return brl.format(cents / 100)
+}
+
+/** Só o valor, sem o "R$" ("72,90"), para quando o símbolo tem estilo próprio. */
+export function formatPriceAmount(cents: number) {
+  return amount.format(cents / 100)
 }
 
 /** "1 produto", "3 produtos". */

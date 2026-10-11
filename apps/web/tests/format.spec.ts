@@ -1,4 +1,11 @@
-import { formatPrice, pluralize, pluralTypeLabel } from '@/utils/format'
+import { formatPrice, formatPriceAmount, pluralize, pluralTypeLabel } from '@/utils/format'
+
+describe('formatPriceAmount', () => {
+  it('formata só o valor, sem o símbolo', () => {
+    expect(formatPriceAmount(7290)).toBe('72,90')
+    expect(formatPriceAmount(123456)).toBe('1.234,56')
+  })
+})
 
 describe('formatPrice', () => {
   // O Intl separa "R$" do valor com espaço não separável (U+00A0), não com espaço comum.

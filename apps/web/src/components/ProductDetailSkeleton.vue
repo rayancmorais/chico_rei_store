@@ -1,12 +1,12 @@
 <template>
   <div
-    class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
+    class="grid grid-cols-1 items-start gap-5 md:grid-cols-[1.1fr_1fr] md:gap-12"
     aria-busy="true"
     data-test="loading"
   >
     <span class="sr-only" role="status">Carregando produto…</span>
     <div
-      class="relative aspect-[4/5] overflow-hidden rounded-panel border-3 border-ink bg-sand shadow-hq md:shadow-hq-lg"
+      class="relative -mx-4 aspect-[4/3] overflow-hidden border-b-3 border-ink bg-sand md:mx-0 md:rounded-panel md:border-3 md:aspect-[4/5] md:shadow-hq-lg"
       aria-hidden="true"
     >
       <span
@@ -14,7 +14,7 @@
       />
     </div>
     <div
-      class="flex flex-col gap-4 rounded-panel border-3 border-ink bg-surface p-6 shadow-hq md:shadow-hq-lg"
+      class="flex flex-col gap-4 md:rounded-panel md:border-3 md:border-ink md:bg-surface md:p-6 md:shadow-hq-lg"
       aria-hidden="true"
     >
       <div class="h-3 w-24 rounded-pill bg-skeleton" />

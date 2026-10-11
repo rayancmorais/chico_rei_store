@@ -16,8 +16,14 @@ const matchesTypes = (product: Product, types: string[]) =>
 const matchesColors = (product: Product, colors: string[]) =>
   colors.length === 0 || product.colors.some((color) => colors.includes(color.id))
 
-const comparators: Record<ProductSort, ((a: Product, b: Product) => number) | null> = {
-  relevance: null, // ordem da vitrine original
+// Várias cores e uma foto só (os modelos "Personalizada"): a foto não acompanha a cor escolhida.
+const photoFollowsColor = (product: Product) =>
+  product.colors.length <= 1 || Object.keys(product.imagesByColor).length > 1
+
+// Relevância é a ordem da vitrine original, com os produtos cuja foto não troca de cor no fim: a loja
+// abre com peças que mostram a cor escolhida. A ordenação é estável, então o resto não muda de lugar.
+const comparators: Record<ProductSort, (a: Product, b: Product) => number> = {
+  relevance: (a, b) => Number(photoFollowsColor(b)) - Number(photoFollowsColor(a)),
   price_asc: (a, b) => a.priceCents - b.priceCents,
   price_desc: (a, b) => b.priceCents - a.priceCents,
 }
@@ -47,8 +53,7 @@ export function listProducts(
   const filtered = products.filter(
     (product) => matchesTypes(product, query.type) && matchesColors(product, query.color),
   )
-  const comparator = comparators[query.sort]
-  const sorted = comparator ? [...filtered].sort(comparator) : filtered
+  const sorted = [...filtered].sort(comparators[query.sort])
 
   const start = (query.page - 1) * query.limit
   return {

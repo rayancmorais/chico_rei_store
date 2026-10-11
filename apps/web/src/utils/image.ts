@@ -1,16 +1,22 @@
-export type ImageCrop = 'detail' | 'texture'
-
-// Recortes da mesma foto com zoom em pontos diferentes: dão "ângulos" extras sem fotos novas.
-const CROP_PARAMS: Record<ImageCrop, string> = {
-  detail: 'fit=crop&crop=focalpoint&fp-x=0.5&fp-y=0.42&fp-z=2.2',
-  texture: 'fit=crop&crop=focalpoint&fp-x=0.46&fp-y=0.5&fp-z=4',
-}
-
 // As imagens da fonte são PNGs grandes no imgix, que redimensiona e converte para WebP/AVIF pela
 // própria URL. Fora do imgix a URL volta intacta, porque outro host ignoraria ou recusaria os params.
-export function imageUrl(src: string, width: number, crop?: ImageCrop) {
-  if (!new URL(src).hostname.endsWith('.imgix.net')) return src
-  const separator = src.includes('?') ? '&' : '?'
-  const cropParams = crop ? `&h=${width}&${CROP_PARAMS[crop]}` : ''
-  return `${src}${separator}w=${width}${cropParams}&auto=format,compress`
+const isImgix = (src: string) => new URL(src).hostname.endsWith('.imgix.net')
+const withParams = (src: string, params: string) =>
+  `${src}${src.includes('?') ? '&' : '?'}${params}`
+
+/**
+ * `trim`: corta a margem de fundo liso em volta da peça (com um respiro), para ela ocupar uma
+ * moldura pequena sem ficar minúscula.
+ */
+export function imageUrl(src: string, width: number, { trim = false } = {}) {
+  if (!isImgix(src)) return src
+  return withParams(src, `${trim ? 'trim=auto&trim-pad=60&' : ''}w=${width}&auto=format,compress`)
+}
+
+/**
+ * Um recorte de 20 px do canto da foto. As fotos da fonte têm fundo liso: esticado, ele pinta a
+ * sobra quando a foto inteira é encaixada numa moldura de outra proporção, sem emenda visível.
+ */
+export function imageCornerUrl(src: string) {
+  return isImgix(src) ? withParams(src, 'rect=0,0,20,20') : undefined
 }

@@ -1,4 +1,5 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { scrollMotion } from '@/utils/scroll'
 
 // Folga em pixels: arredondamento de zoom deixa o scroll a 1px da ponta.
 const EDGE = 4
@@ -32,11 +33,7 @@ export function useScrollArrows(track: Ref<HTMLElement | null>) {
   function scrollPage(direction: 1 | -1) {
     const el = track.value
     if (!el) return
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    el.scrollBy({
-      left: direction * el.clientWidth * PAGE_RATIO,
-      behavior: reduceMotion ? 'auto' : 'smooth',
-    })
+    el.scrollBy({ left: direction * el.clientWidth * PAGE_RATIO, behavior: scrollMotion() })
   }
 
   let observer: ResizeObserver | undefined

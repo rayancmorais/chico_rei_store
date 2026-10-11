@@ -10,8 +10,16 @@ const SourceColorSchema = z.object({
 })
 
 const SourceFabricSchema = z.object({
+  color_id: z.number().int(),
   product_color_name: z.string(),
   product_color_hexa: z.string(),
+})
+
+/** Foto da peça num tecido e modelo. Sem modelo, é só a amostra do tecido. */
+const SourceFabricImageSchema = z.object({
+  color_id: z.number().int(),
+  product_model_id: z.number().int().nullable(),
+  url: z.string().url(),
 })
 
 export const SourceProductSchema = z.object({
@@ -21,6 +29,11 @@ export const SourceProductSchema = z.object({
   price: z.number().nonnegative(),
   price_old: z.number().nonnegative(),
   img_cover: z.string().url(),
+  img_cover_model: z.number().int().nullable(),
+  images_by_fabric: z
+    .array(SourceFabricImageSchema)
+    .nullish()
+    .transform((images) => images ?? []),
   is_clothing: z.boolean(),
   type: z.object({
     url: z.string(),

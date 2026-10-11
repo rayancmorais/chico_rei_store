@@ -32,7 +32,7 @@ watch(() => props.productId, load, { immediate: true })
 <template>
   <section
     v-if="products.length"
-    class="flex flex-col gap-6 pt-14 md:pt-20"
+    class="flex flex-col gap-6 pt-14 md:pt-20 lg:pt-12"
     aria-labelledby="related-title"
     data-test="related"
   >

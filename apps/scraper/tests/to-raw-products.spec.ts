@@ -15,6 +15,8 @@ function sourceProduct(overrides: Partial<SourceProduct> = {}): SourceProduct {
     price: 72.9,
     price_old: 0,
     img_cover: 'https://umapenca.imgix.net/1/capa.png',
+    img_cover_model: 34,
+    images_by_fabric: [],
     is_clothing: true,
     type: { url: 'camiseta', name: 'Camiseta' },
     fabrics: [],
@@ -53,9 +55,9 @@ describe('toRawProduct', () => {
   it('remove cores repetidas entre tecidos', () => {
     const product = sourceProduct({
       fabrics: [
-        { product_color_name: 'Preto', product_color_hexa: '#000000' },
-        { product_color_name: 'Preto', product_color_hexa: '#000000' },
-        { product_color_name: 'Cinza Mescla', product_color_hexa: '#868585' },
+        { color_id: 8, product_color_name: 'Preto', product_color_hexa: '#000000' },
+        { color_id: 8, product_color_name: 'Preto', product_color_hexa: '#000000' },
+        { color_id: 3, product_color_name: 'Cinza Mescla', product_color_hexa: '#868585' },
       ],
     })
 
@@ -72,5 +74,55 @@ describe('toRawProduct', () => {
 
   it('fica sem cores quando a fonte não traz nenhuma', () => {
     expect(toRawProduct(sourceProduct()).colors).toEqual([])
+  })
+})
+
+describe('toRawProduct: foto de cada cor', () => {
+  const photo = (colorId: number, modelId: number | null, file: string) => ({
+    color_id: colorId,
+    product_model_id: modelId,
+    url: `https://umapenca.imgix.net/1/${file}`,
+  })
+  const fabrics = [
+    { color_id: 8, product_color_name: 'Preto', product_color_hexa: '#000000' },
+    { color_id: 2, product_color_name: 'Branco', product_color_hexa: '#ffffff' },
+    { color_id: 5, product_color_name: 'Verde', product_color_hexa: '#007a33' },
+  ]
+
+  it('usa a foto do mesmo modelo da capa e ignora a amostra de tecido', () => {
+    const product = sourceProduct({
+      fabrics,
+      img_cover_model: 34,
+      images_by_fabric: [
+        photo(8, null, 'amostra-preto.jpg'),
+        photo(8, 31, 'babylook-preto.png'),
+        photo(8, 34, 'regular-preto.png'),
+        photo(2, 34, 'regular-branco.png'),
+      ],
+    })
+
+    expect(toRawProduct(product).imagesByColor).toEqual({
+      preto: 'https://umapenca.imgix.net/1/regular-preto.png',
+      branco: 'https://umapenca.imgix.net/1/regular-branco.png',
+    })
+  })
+
+  it('cai para outro modelo quando o da capa não tem a cor, e cor sem foto fica de fora', () => {
+    const product = sourceProduct({
+      fabrics,
+      img_cover_model: 34,
+      images_by_fabric: [photo(2, 31, 'babylook-branco.png'), photo(5, null, 'amostra-verde.jpg')],
+    })
+
+    expect(toRawProduct(product).imagesByColor).toEqual({
+      branco: 'https://umapenca.imgix.net/1/babylook-branco.png',
+    })
+  })
+
+  it('numa página real, cada cor da camiseta tem a própria foto', () => {
+    const tropicalia = loadPage('loja-page-1.html').find((p) => p.sourceId === '431436')!
+
+    expect(Object.keys(tropicalia.imagesByColor ?? {})).toEqual(tropicalia.colors.map((c) => c.id))
+    expect(new Set(Object.values(tropicalia.imagesByColor ?? {})).size).toBe(7)
   })
 })

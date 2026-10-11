@@ -3,9 +3,10 @@ import { PiniaVuePlugin } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import VueRouter from 'vue-router'
 import type { CreateElement } from 'vue'
-import { delay, http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw'
 import App from '@/App.vue'
 import CatalogView from '@/views/CatalogView.vue'
+import ProductView from '@/views/ProductView.vue'
 import { useCartStore } from '@/stores/cart'
 import { server } from './setup'
 import { listResponse, productSummary } from './factories'
@@ -173,9 +174,12 @@ describe('navegação pelo cabeçalho', () => {
 
   it('o pedido não sobra se a pessoa sai do catálogo antes da primeira carga terminar', async () => {
     const { wrapper, router } = await mountApp()
+    // A listagem só responde quando o teste mandar: assim a pessoa sai antes da primeira carga.
+    let releaseList!: () => void
+    const listReleased = new Promise<void>((resolve) => (releaseList = resolve))
     server.use(
       http.get('*/api/products', async () => {
-        await delay(50)
+        await listReleased
         return HttpResponse.json(listResponse([productSummary()]))
       }),
     )
@@ -185,9 +189,9 @@ describe('navegação pelo cabeçalho', () => {
     await settle()
 
     await router.push('/')
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    releaseList()
+    await vi.waitFor(() => expect(wrapper.find('[data-test="product-grid"]').exists()).toBe(true))
 
-    expect(wrapper.find('[data-test="product-grid"]').exists()).toBe(true)
     expect(scrollIntoView).not.toHaveBeenCalled()
     expect(focusedId()).not.toBe('results-title')
     wrapper.destroy()
@@ -251,5 +255,47 @@ describe('navegação pelo cabeçalho', () => {
       expect(scrollTo).not.toHaveBeenCalled()
       wrapper.destroy()
     })
+  })
+})
+
+describe('adicionar ao carrinho pela página de produto', () => {
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('o contador do cabeçalho sobe e o carrinho só abre em "Ver carrinho"', async () => {
+    const router = new VueRouter({
+      mode: 'abstract',
+      routes: [
+        { path: '/', name: 'catalog', component: page },
+        { path: '/produto/:id', name: 'product', component: ProductView, props: true },
+      ],
+    })
+    await router.push('/produto/cam-1')
+    const wrapper = mount(App, {
+      localVue,
+      router,
+      pinia: createTestingPinia({ createSpy: vi.fn, stubActions: false }),
+      attachTo: document.body,
+    })
+    await settle()
+    const addButton = () => wrapper.find('[data-test="add-to-cart"]')
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    await wrapper.find('[data-test="size-option-G"]').trigger('change')
+
+    ;(addButton().element as HTMLElement).focus()
+    await addButton().trigger('click')
+
+    expect(wrapper.find('[data-test="cart-count"]').text()).toBe('1')
+    expect(wrapper.find('[data-test="cart-drawer"]').exists()).toBe(false)
+    expect(document.activeElement).toBe(addButton().element)
+    expect(wrapper.find('[data-test="added"]').text()).toBe('Adicionado ao carrinho')
+
+    await addButton().trigger('click')
+    expect(wrapper.find('[data-test="cart-drawer"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="cart-count"]').text()).toBe('1')
+    wrapper.destroy()
   })
 })
