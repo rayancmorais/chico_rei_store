@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { ProductSummary } from '@chico_rei_store/shared'
 import { pluralize } from '@/utils/format'
 import { imageUrl } from '@/utils/image'
+import { mediaFrom } from '@/config/breakpoints'
 import PriceTag from '@/components/PriceTag.vue'
 
 // O título do card fica um nível abaixo do título da seção em que ele aparece; quem usa o card
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<{ product: ProductSummary; headingLevel?:
 })
 
 const MAX_SWATCHES = 5
+const CARD_SIZES = `${mediaFrom('lg')} 280px, ${mediaFrom('md')} 33vw, 50vw`
 
 const visibleColors = computed(() => props.product.colors.slice(0, MAX_SWATCHES))
 const hiddenColorCount = computed(() => props.product.colors.length - visibleColors.value.length)
@@ -34,7 +36,7 @@ const srcset = computed(
       <img
         :src="imageUrl(product.image, 400)"
         :srcset="srcset"
-        sizes="(min-width: 1024px) 280px, (min-width: 768px) 33vw, 50vw"
+        :sizes="CARD_SIZES"
         alt=""
         width="400"
         height="500"

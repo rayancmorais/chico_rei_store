@@ -6,6 +6,7 @@ import { HttpError, isCancelled } from '@/services/http'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { mediaFrom } from '@/config/breakpoints'
 import { scrollMotion } from '@/utils/scroll'
 import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
@@ -37,7 +38,7 @@ const shaking = ref(false)
 
 // Do tablet para cima, foto e informações ficam lado a lado, num card; no celular, empilhadas e
 // sem moldura. Decide só o que muda no DOM; o resto são classes responsivas.
-const twoColumns = useMediaQuery('(min-width: 768px)')
+const twoColumns = useMediaQuery(mediaFrom('md'))
 
 const colorSelector = ref<InstanceType<typeof ColorSelector> | null>(null)
 const sizeSelector = ref<InstanceType<typeof SizeSelector> | null>(null)

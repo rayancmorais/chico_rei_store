@@ -1,10 +1,12 @@
 import type { Config } from 'tailwindcss'
+import { BREAKPOINTS } from './src/config/breakpoints'
 
 // Tokens da direção visual "Ateliê HQ".
 export default {
   content: ['./index.html', './src/**/*.{vue,ts}'],
   theme: {
     extend: {
+      screens: { md: `${BREAKPOINTS.md}px`, lg: `${BREAKPOINTS.lg}px` },
       colors: {
         paper: '#EFE7DA',
         surface: '#F7F2E9',

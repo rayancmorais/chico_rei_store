@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { mediaBelow, mediaFrom } from '@/config/breakpoints'
 import { imageCornerUrl, imageUrl } from '@/utils/image'
 
 const props = defineProps<{ image: string; name: string }>()
 
 const ZOOM = 2
+const PHONE = mediaBelow('md')
+const PHOTO_SIZES = `${mediaFrom('md')} 50vw, 100vw`
 // As fotos da fonte têm 1800 px de largura: pedir mais ao CDN só aumentaria o arquivo, sem detalhe.
 const ZOOM_SRCSET_WIDTHS = [1200, 1800]
 
@@ -96,14 +99,14 @@ onBeforeUnmount(() => {
       <!-- No celular, a foto vem sem a margem de fundo, para a peça não ficar pequena na moldura. -->
       <picture>
         <source
-          media="(max-width: 767px)"
+          :media="PHONE"
           :srcset="`${imageUrl(image, 600, { trim: true })} 600w, ${imageUrl(image, 1200, { trim: true })} 1200w`"
           sizes="100vw"
         />
         <img
           :src="imageUrl(image, 800)"
           :srcset="`${imageUrl(image, 600)} 600w, ${imageUrl(image, 1200)} 1200w`"
-          sizes="(min-width: 768px) 50vw, 100vw"
+          :sizes="PHOTO_SIZES"
           :alt="name"
           width="800"
           height="1000"
@@ -113,7 +116,7 @@ onBeforeUnmount(() => {
       </picture>
       <!-- O dobro do `sizes` da foto principal, porque ela é exibida com zoom 2x. -->
       <picture v-if="wantsHiRes">
-        <source media="(max-width: 767px)" :srcset="hiResSrcset(true)" sizes="200vw" />
+        <source :media="PHONE" :srcset="hiResSrcset(true)" sizes="200vw" />
         <img
           :srcset="hiResSrcset(false)"
           sizes="100vw"
