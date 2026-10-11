@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { FiltersResponse, ProductSort } from '@chico_rei_store/shared'
 import FilterChip from '@/components/FilterChip.vue'
 import ColorSwatchButton from '@/components/ColorSwatchButton.vue'
 import SortControl from '@/components/SortControl.vue'
+import { useScrollArrows } from '@/composables/useScrollArrows'
+import { pluralize } from '@/utils/format'
 
 const props = defineProps<{
   filters: FiltersResponse
@@ -27,13 +29,25 @@ const visibleColors = computed(() =>
   showAllColors.value ? props.filters.colors : props.filters.colors.slice(0, COLLAPSED_COLORS),
 )
 const hiddenColorCount = computed(() => props.filters.colors.length - visibleColors.value.length)
+
+const typeTrack = ref<HTMLElement | null>(null)
+const { canScrollBack, canScrollForward, hiddenAhead, measure, scrollBack, scrollForward } =
+  useScrollArrows(typeTrack)
+const forwardLabel = computed(() => {
+  const count = hiddenAhead.value
+  if (count === 0) return 'Ver mais tipos'
+  return `Ver mais ${pluralize(count, 'tipo', 'tipos')}`
+})
+// A largura dos chips muda com as contagens, que mudam a cada filtro.
+watch(
+  () => props.filters.types,
+  () => nextTick(measure),
+)
 </script>
 
 <template>
   <div class="rounded-panel border-3 border-ink bg-surface shadow-[6px_6px_0_#2A1F17]">
-    <div
-      class="flex items-center gap-1.5 overflow-x-auto border-b-2 border-ink px-3.5 py-3 [scrollbar-width:none]"
-    >
+    <div class="flex items-center border-b-2 border-ink py-3 pl-3.5 pr-2">
       <FilterChip
         label="Tudo"
         :count="allTypesCount"
@@ -41,17 +55,65 @@ const hiddenColorCount = computed(() => props.filters.colors.length - visibleCol
         data-test="all-types"
         @click="emit('clear-types')"
       />
-      <span class="mx-1.5 h-[26px] w-0.5 flex-none bg-line" aria-hidden="true" />
-      <FilterChip
-        v-for="type in filters.types"
-        :key="type.id"
-        :label="type.label"
-        :count="type.count"
-        :pressed="selectedTypes.includes(type.id)"
-        :disabled="type.count === 0 && !selectedTypes.includes(type.id)"
-        :data-test="`type-${type.id}`"
-        @click="emit('toggle-type', type.id)"
-      />
+      <span class="mx-3 h-[26px] w-0.5 flex-none bg-line" aria-hidden="true" />
+
+      <div class="relative min-w-0 flex-1">
+        <!-- O padding dá espaço para a sombra e o hover dos chips, que o overflow cortaria. -->
+        <div
+          ref="typeTrack"
+          class="-my-1.5 flex items-center gap-1.5 overflow-x-auto py-1.5 pl-0.5 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label="Tipos de produto"
+          data-test="type-track"
+        >
+          <FilterChip
+            v-for="type in filters.types"
+            :key="type.id"
+            :label="type.label"
+            :count="type.count"
+            :pressed="selectedTypes.includes(type.id)"
+            :disabled="type.count === 0 && !selectedTypes.includes(type.id)"
+            :data-test="`type-${type.id}`"
+            @click="emit('toggle-type', type.id)"
+          />
+        </div>
+
+        <div
+          v-if="canScrollBack"
+          class="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-surface from-55% to-transparent pr-7"
+        >
+          <button
+            type="button"
+            class="pointer-events-auto flex h-[38px] items-center rounded-panel border-2 border-ink bg-white px-3 text-sm font-bold shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            aria-label="Ver tipos anteriores"
+            data-test="types-back"
+            @click="scrollBack"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+        </div>
+        <div
+          v-if="canScrollForward"
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-surface from-55% to-transparent pl-7"
+        >
+          <button
+            type="button"
+            class="pointer-events-auto flex h-[38px] items-center gap-1.5 rounded-panel border-2 border-ink bg-accent pl-2 pr-3 text-sm font-bold text-surface shadow-hq-sm active:translate-x-px active:translate-y-px active:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            :aria-label="forwardLabel"
+            data-test="types-forward"
+            @click="scrollForward"
+          >
+            <span
+              v-if="hiddenAhead"
+              class="flex h-[22px] min-w-6 items-center justify-center rounded-pill border-2 border-ink bg-mustard px-1.5 text-[11px] text-ink"
+              aria-hidden="true"
+            >
+              +{{ hiddenAhead }}
+            </span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="flex items-center justify-between gap-5 px-3.5 py-2.5">
