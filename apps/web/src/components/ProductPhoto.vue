@@ -21,7 +21,8 @@ const toggleButton = ref<HTMLButtonElement | null>(null)
 const zoomOn = ref(false)
 const pointerInside = ref(false)
 const origin = ref('50% 50%')
-// A versão grande só é baixada quando o zoom é ligado pela primeira vez.
+// A versão grande só é baixada quando o zoom é ligado pela primeira vez: quem não usa o zoom não
+// paga por ela.
 const wantsHiRes = ref(false)
 const hiResLoaded = ref(false)
 

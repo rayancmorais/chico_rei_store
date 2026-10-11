@@ -1,4 +1,3 @@
-/** Rolagem suave, ou instantânea para quem pediu movimento reduzido no sistema. */
 export function scrollMotion(): ScrollBehavior {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 }

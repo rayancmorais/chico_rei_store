@@ -54,7 +54,6 @@ const chosenVariant = computed(() => {
   const color = selectedColor.value?.name ?? ''
   return needsSize.value && selectedSize.value ? `${color} · Tam. ${selectedSize.value}` : color
 })
-// Linha do card de compra: o que falta ou, com tudo escolhido, a variação.
 const choiceLine = computed(() => {
   if (colorPending.value && sizePending.value) return { ready: false, text: 'Falta cor e tamanho' }
   if (colorPending.value) return { ready: false, text: 'Falta a cor' }
@@ -62,7 +61,6 @@ const choiceLine = computed(() => {
   return { ready: true, text: chosenVariant.value }
 })
 
-// Enquanto dura o estado "adicionado", o card de compra mostra o que entrou.
 const addedNotice = computed(() =>
   justAdded.value && product.value
     ? { name: product.value.name, detail: chosenVariant.value }
@@ -218,12 +216,16 @@ onBeforeUnmount(() => {
     </FeedbackState>
 
     <template v-else-if="product">
+      <!-- `grid-cols-1` (coluna `minmax(0, 1fr)`): sem ele, a coluna cresce até caber a linha de
+      cores, que não quebra, e a página passa da largura do celular. -->
       <article
         class="grid grid-cols-1 items-start gap-3 md:grid-cols-[1.1fr_1fr] md:gap-12 lg:grid-cols-[auto_minmax(0,1fr)]"
         data-test="product"
       >
         <!-- No notebook, a foto inteira cabe na tela abaixo do cabeçalho e fica parada enquanto as
-        informações rolam. A largura é limitada pela altura da tela para manter a proporção 4:5. -->
+        informações rolam. A largura é limitada pela altura da tela para manter a proporção 4:5:
+        7rem é o espaço do caminho de navegação acima da foto mais um respiro embaixo, e 37.5rem
+        (600 px) é a largura que a coluna da foto já tinha antes desse limite. -->
         <ProductPhoto
           :image="product.image"
           :name="product.name"
@@ -240,6 +242,8 @@ onBeforeUnmount(() => {
           </router-link>
         </ProductPhoto>
 
+        <!-- No tablet, quando a foto é mais alta que as informações, o painel acompanha a rolagem;
+        no desktop quem fica parada é a foto, então o painel volta a rolar. -->
         <div
           class="flex flex-col md:sticky md:top-24 md:overflow-hidden md:rounded-panel md:border-3 md:border-ink md:bg-surface md:shadow-hq-lg lg:static"
         >
@@ -261,7 +265,6 @@ onBeforeUnmount(() => {
                 <span class="text-accent">{{ product.type.label }}</span>
                 <span>Nº {{ product.id }}</span>
               </p>
-              <!-- Nome e preço dividem a linha, em no máximo duas linhas. -->
               <div class="flex items-start justify-between gap-3">
                 <h1
                   class="min-w-0 text-balance font-display text-[20px] leading-[1.15] tracking-[-0.02em] md:text-[28px]"
