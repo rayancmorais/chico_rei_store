@@ -68,6 +68,8 @@ cd chico_rei_store
 npm ci
 ```
 
+O npm 11 (que vem com as versões recentes do Node 24) pode avisar que bloqueou scripts de instalação de algumas dependências (esbuild, vue-demi). Pode ignorar: o projeto não depende desses scripts.
+
 O `.env` é opcional: sem ele, todos os valores padrão funcionam. Para ajustar algo, copie o exemplo:
 
 ```bash
