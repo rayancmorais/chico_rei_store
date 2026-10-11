@@ -105,7 +105,7 @@ npm run preview -w @chico_rei_store/web     # terminal 2: front compilado em htt
 ### Qualidade e testes
 
 ```bash
-npm test             # 220 testes unitários e de componentes (API 44, scraper 30, web 146)
+npm test             # 234 testes unitários e de componentes (API 44, scraper 30, web 160)
 npm run typecheck    # TypeScript em todos os pacotes, incluindo os .vue (vue-tsc)
 npm run lint         # ESLint
 ```
@@ -198,7 +198,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 **Usabilidade e acessibilidade**
 
 - Botão de compra com `aria-disabled` em vez de `disabled`. Um botão `disabled` não reage ao clique, e a pessoa fica sem saber por quê. Aqui, o clique destaca o seletor que falta ("Falta escolher"), faz ele tremer e leva o foco até ele. O leitor de tela continua anunciando o botão como indisponível.
-- No desktop, o botão Ampliar liga um zoom de 2x que segue o mouse; no celular, vale o zoom de pinça do navegador.
+- O botão Ampliar liga um zoom de 2x na foto: no desktop, ele segue o mouse; no celular, arrastar o dedo escolhe o ponto.
 - Carrinho e painel de filtros são diálogos modais de verdade: foco preso dentro, `Esc` fecha, o foco volta para quem abriu e a página de trás não rola.
 - No celular, os filtros abrem numa folha de baixo para cima (bottom sheet), com o botão "Ver N produtos" mostrando o total real. No desktop, ficam numa barra fixa no topo.
 - Na barra de tipos do desktop, setas aparecem quando há tipos escondidos à direita, com a quantidade (`+1`), porque mouse de roda não rola na horizontal. A roda não foi convertida em rolagem lateral de propósito: a barra é fixa, e isso travaria a rolagem da página.
@@ -220,7 +220,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Testes**
 
-- 220 testes com Vitest (API 44, scraper 30, web 146): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
+- 234 testes com Vitest (API 44, scraper 30, web 160): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
 - Nos testes, qualquer aviso do Vue vira erro. Isso já pegou props com tipo errado que só apareceriam como um aviso no console.
 
 **Deploy**

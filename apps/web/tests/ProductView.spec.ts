@@ -24,7 +24,19 @@ function useProduct(overrides: Parameters<typeof product>[0]) {
   )
 }
 
-async function mountView(id = 'cam-1') {
+// O layout muda no DOM a partir do tablet (768 px). O jsdom não tem `matchMedia`, então sem esta
+// opção a página monta como no celular.
+function stubScreen({ twoColumns }: { twoColumns: boolean }) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: twoColumns && query === '(min-width: 768px)',
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }))
+}
+
+async function mountView(id = 'cam-1', { twoColumns = false } = {}) {
+  stubScreen({ twoColumns })
   const router = new VueRouter({
     mode: 'abstract',
     routes: [
@@ -48,7 +60,13 @@ async function mountView(id = 'cam-1') {
   return { wrapper, router, cart: useCartStore() }
 }
 
+beforeEach(() => {
+  // O jsdom não implementa rolagem.
+  Element.prototype.scrollIntoView = vi.fn()
+})
+
 afterEach(() => {
+  vi.unstubAllGlobals()
   document.body.innerHTML = ''
 })
 
@@ -59,22 +77,23 @@ describe('ProductView', () => {
   it('mostra o produto com nome, preço e descrição', async () => {
     const { wrapper } = await mountView()
     expect(wrapper.find('h1').text()).toBe('Camiseta Teste')
-    expect(wrapper.find('[data-test="price"]').text()).toMatch(/R\$\s79,90/)
+    expect(wrapper.find('[data-test="price"]').text()).toMatch(/R\$\s*79,90/)
     expect(wrapper.text()).toContain('Camiseta de algodão.')
   })
 
-  it('bloqueia o botão até escolher cor e tamanho, dizendo o que falta', async () => {
-    const { wrapper } = await mountView()
+  it('bloqueia o botão até escolher cor e tamanho, e o card diz o que falta', async () => {
+    const { wrapper } = await mountView('cam-1', { twoColumns: true })
+    const choice = () => wrapper.find('[data-test="choice-line"]').text()
     expect(addButton(wrapper).attributes('aria-disabled')).toBe('true')
-    expect(wrapper.find('[data-test="missing-choice"]').text()).toBe('Escolha a cor e o tamanho')
+    expect(choice()).toBe('Falta cor e tamanho')
 
     await wrapper.find('[data-test="color-option-preto"]').trigger('change')
     expect(addButton(wrapper).attributes('aria-disabled')).toBe('true')
-    expect(wrapper.find('[data-test="missing-choice"]').text()).toBe('Escolha o tamanho')
+    expect(choice()).toBe('Falta o tamanho')
 
     await wrapper.find('[data-test="size-option-M"]').trigger('change')
     expect(addButton(wrapper).attributes('aria-disabled')).toBeUndefined()
-    expect(wrapper.find('[data-test="missing-choice"]').exists()).toBe(false)
+    expect(choice()).toBe('Preto · Tam. M')
   })
 
   it('clicar no botão bloqueado destaca o que falta e leva o foco até lá', async () => {
@@ -91,13 +110,18 @@ describe('ProductView', () => {
       false,
     )
     expect(document.activeElement).toBe(sizeGroup.find('[data-test="size-option-P"]').element)
+    // A rolagem é da view, e não do foco, para descontar o cabeçalho fixo.
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+      expect.objectContaining({ block: 'nearest' }),
+    )
+    expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts[0]).toBe(sizeGroup.element)
 
     await wrapper.find('[data-test="size-option-M"]').trigger('change')
     expect(wrapper.find('[data-test="pending-tag"]').exists()).toBe(false)
   })
 
   it('adiciona ao carrinho com a variação escolhida e confirma', async () => {
-    const { wrapper, cart } = await mountView()
+    const { wrapper, cart } = await mountView('cam-1', { twoColumns: true })
     await wrapper.find('[data-test="color-option-branco"]').trigger('change')
     await wrapper.find('[data-test="size-option-G"]').trigger('change')
     await addButton(wrapper).trigger('click')
@@ -106,7 +130,7 @@ describe('ProductView', () => {
     expect(cart.items[0]).toMatchObject({ productId: 'cam-1', size: 'G', quantity: 1 })
     expect(cart.items[0]?.color.id).toBe('branco')
     expect(wrapper.find('[data-test="added"]').attributes('role')).toBe('status')
-    expect(addButton(wrapper).text()).toContain('Adicionado')
+    expect(addButton(wrapper).text()).toBe('Ver carrinho')
     expect(cart.isOpen).toBe(false)
 
     // O mesmo botão vira atalho para o carrinho, sem adicionar de novo.
@@ -157,7 +181,7 @@ describe('ProductView', () => {
     expect(photo.attributes('srcset')).toMatch(/w=600.* 600w, .*w=1200.* 1200w/)
     expect(photo.attributes('srcset')).not.toContain('fp-')
     expect(wrapper.find('button[aria-label="Próxima imagem"]').exists()).toBe(false)
-    expect(wrapper.find('[aria-pressed]').exists()).toBe(false)
+    expect(wrapper.find('[data-test^="gallery"]').exists()).toBe(false)
   })
 
   it('mostra outros produtos do mesmo tipo, sem repetir o atual', async () => {
@@ -215,6 +239,117 @@ describe('ProductView', () => {
     await settle()
 
     expect(wrapper.find('h1').text()).toBe('Outra Camiseta')
-    expect(wrapper.find('[data-test="missing-choice"]').text()).toBe('Escolha a cor e o tamanho')
+    expect(addButton(wrapper).attributes('aria-disabled')).toBe('true')
+  })
+})
+
+describe('ProductView no celular', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('o card de compra mostra miniatura, preço, o que falta e o botão "Adicionar"', async () => {
+    const { wrapper } = await mountView()
+    const box = wrapper.find('[data-test="buy-box"]')
+    expect(box.find('img').exists()).toBe(true)
+    expect(box.find('[data-test="buy-summary"]').text()).toMatch(/R\$\s79,90/)
+    expect(box.find('[data-test="choice-line"]').text()).toBe('Falta cor e tamanho')
+    expect(addButton(wrapper).text()).toBe('Adicionar ao carrinho')
+    expect(wrapper.find('[data-test="missing-choice"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="size-option-G"]').trigger('change')
+    expect(box.find('[data-test="choice-line"]').text()).toBe('Falta a cor')
+
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    expect(box.find('[data-test="choice-line"]').text()).toBe('Branco · Tam. G')
+  })
+
+  it('ao adicionar, o card mostra o que entrou por 3 s; depois volta a "Adicionar"', async () => {
+    const { wrapper, cart } = await mountView()
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    await wrapper.find('[data-test="size-option-G"]').trigger('change')
+    vi.useFakeTimers()
+
+    const button = addButton(wrapper).element as HTMLElement
+    button.focus()
+    await addButton(wrapper).trigger('click')
+
+    const notice = wrapper.find('[data-test="added-notice"]')
+    expect(notice.text()).toContain('Adicionado ao carrinho')
+    expect(notice.text()).toContain('Camiseta Teste')
+    expect(notice.text()).toContain('Branco · Tam. G')
+    expect(addButton(wrapper).text()).toBe('Ver carrinho')
+    expect(cart.isOpen).toBe(false)
+    expect(document.activeElement).toBe(button)
+
+    await addButton(wrapper).trigger('click')
+    expect(cart.isOpen).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wrapper.find('[data-test="added-notice"]').exists()).toBe(false)
+    expect(addButton(wrapper).text()).toBe('Adicionar ao carrinho')
+    expect(cart.items[0]?.quantity).toBe(1)
+  })
+
+  it('num produto sem tamanho, o aviso mostra só a cor', async () => {
+    useProduct({ sizes: [] })
+    const { wrapper } = await mountView()
+    await wrapper.find('[data-test="color-option-preto"]').trigger('change')
+    await addButton(wrapper).trigger('click')
+
+    const detail = wrapper.find('[data-test="added-notice"]').text()
+    expect(detail).toContain('Preto')
+    expect(detail).not.toContain('Tam.')
+  })
+
+  it('no desktop, o mesmo card de compra e o mesmo aviso de 3 s', async () => {
+    const { wrapper } = await mountView('cam-1', { twoColumns: true })
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    await wrapper.find('[data-test="size-option-G"]').trigger('change')
+    expect(wrapper.find('[data-test="choice-line"]').text()).toBe('Branco · Tam. G')
+    vi.useFakeTimers()
+
+    await addButton(wrapper).trigger('click')
+    expect(wrapper.find('[data-test="added-notice"]').text()).toContain('Branco · Tam. G')
+
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wrapper.find('[data-test="added-notice"]').exists()).toBe(false)
+    expect(addButton(wrapper).text()).toBe('Adicionar ao carrinho')
+  })
+
+  it('"Sobre a peça" fica recolhido, e aberto mostra a descrição e o aviso de dados gerados', async () => {
+    const mobile = await mountView()
+    const about = mobile.wrapper.find('[data-test="about"]')
+    expect(about.element.tagName).toBe('DETAILS')
+    expect((about.element as HTMLDetailsElement).open).toBe(false)
+    expect(about.find('summary').text()).toContain('Sobre a peça')
+    expect(about.find('[data-test="enriched-note"]').exists()).toBe(true)
+    mobile.wrapper.destroy()
+
+    const desktop = await mountView('cam-1', { twoColumns: true })
+    expect(desktop.wrapper.find('[data-test="about"]').element.tagName).toBe('SECTION')
+  })
+
+  it('o "Nº" aparece uma vez só, na linha de informações', async () => {
+    const mobile = await mountView()
+    const product = mobile.wrapper.find('[data-test="product"]')
+    expect(product.text().match(/Nº/g)).toHaveLength(1)
+    expect(product.find('[data-test="product-meta"]').text()).toMatch(/Camiseta\s*Nº cam-1/)
+    mobile.wrapper.destroy()
+
+    const desktop = await mountView('cam-1', { twoColumns: true })
+    expect(desktop.wrapper.find('[data-test="product-meta"]').exists()).toBe(false)
+    expect(desktop.wrapper.find('[data-test="product"]').text()).toContain('Nº cam-1')
+  })
+
+  it('troca o caminho de navegação por um botão Voltar sobre a foto', async () => {
+    const mobile = await mountView()
+    expect(mobile.wrapper.find('[data-test="back-to-store"]').attributes('aria-label')).toBe(
+      'Voltar para a loja',
+    )
+    expect(mobile.wrapper.find('nav[aria-label="Navegação estrutural"]').exists()).toBe(false)
+    mobile.wrapper.destroy()
+
+    const desktop = await mountView('cam-1', { twoColumns: true })
+    expect(desktop.wrapper.find('[data-test="back-to-store"]').exists()).toBe(false)
+    expect(desktop.wrapper.find('nav[aria-label="Navegação estrutural"]').exists()).toBe(true)
   })
 })

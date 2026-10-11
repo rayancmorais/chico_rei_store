@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { imageUrl } from '@/utils/image'
+import { useMediaQuery } from '@/composables/useMediaQuery'
+import { imageCornerUrl, imageUrl } from '@/utils/image'
 
-const props = defineProps<{ image: string; name: string; code: string }>()
+// Sem `code`, a etiqueta Nº não aparece (no celular, o número fica na linha de informações).
+const props = defineProps<{ image: string; name: string; code?: string }>()
 
 const ZOOM = 2
 // As fotos da fonte têm 1800 px de largura: pedir mais ao CDN só aumentaria o arquivo, sem detalhe.
 const ZOOM_SRCSET_WIDTHS = [1200, 1800]
 
-// O toque no celular também dispara eventos de mouse. O zoom fica só para mouse de verdade; no
-// celular vale o zoom de pinça do navegador.
-const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)')
-const canZoom = ref(finePointer?.matches ?? false)
-const syncCanZoom = (event: MediaQueryListEvent) => (canZoom.value = event.matches)
-finePointer?.addEventListener?.('change', syncCanZoom)
+// Com mouse, o zoom ligado amplia ao passar o mouse e segue o cursor. No toque não há hover: ligado,
+// a foto já amplia no centro, e arrastar o dedo escolhe o ponto.
+const hasMouse = useMediaQuery('(hover: hover) and (pointer: fine)')
+const toggleButton = ref<HTMLButtonElement | null>(null)
 
 const zoomOn = ref(false)
 const pointerInside = ref(false)
@@ -22,16 +22,25 @@ const origin = ref('50% 50%')
 const wantsHiRes = ref(false)
 const hiResLoaded = ref(false)
 
-const zooming = computed(() => zoomOn.value && pointerInside.value)
-const hiResSrcset = computed(() =>
-  ZOOM_SRCSET_WIDTHS.map((width) => `${imageUrl(props.image, width)} ${width}w`).join(', '),
-)
+const zooming = computed(() => zoomOn.value && (pointerInside.value || !hasMouse.value))
+const hiResSrcset = (trim: boolean) =>
+  ZOOM_SRCSET_WIDTHS.map((width) => `${imageUrl(props.image, width, { trim })} ${width}w`).join(
+    ', ',
+  )
+// No celular, a moldura é mais larga que a foto: ela aparece inteira (sem cortar a peça) e a sobra
+// ganha a cor do fundo da própria foto. No desktop, a foto cobre a moldura e isto fica escondido.
+const cornerBackground = computed(() => {
+  const corner = imageCornerUrl(props.image)
+  return corner ? { backgroundImage: `url("${corner}")` } : undefined
+})
 const zoomStyle = computed(() => ({
   transform: zooming.value ? `scale(${ZOOM})` : 'none',
   transformOrigin: origin.value,
 }))
 
-function followPointer(event: MouseEvent) {
+function followPointer(event: PointerEvent) {
+  // O toque no próprio botão não escolhe ponto: o zoom recém-ligado começa no centro da foto.
+  if (toggleButton.value?.contains(event.target as Node)) return
   pointerInside.value = true
   const frame = (event.currentTarget as HTMLElement).getBoundingClientRect()
   const x = ((event.clientX - frame.left) / frame.width) * 100
@@ -47,6 +56,7 @@ function closeOnEscape(event: KeyboardEvent) {
 watch(zoomOn, (on) => {
   if (on) {
     wantsHiRes.value = true
+    origin.value = '50% 50%'
     document.addEventListener('keydown', closeOnEscape)
   } else {
     document.removeEventListener('keydown', closeOnEscape)
@@ -64,67 +74,80 @@ watch(
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', closeOnEscape)
-  finePointer?.removeEventListener?.('change', syncCanZoom)
 })
 </script>
 
 <template>
   <div
-    class="relative aspect-[4/5] overflow-hidden rounded-panel border-3 border-ink bg-sand shadow-hq md:shadow-hq-lg"
-    :class="{ 'cursor-zoom-in': zoomOn }"
+    class="relative aspect-[16/10] overflow-hidden bg-cover bg-center border-b-3 border-ink bg-sand md:rounded-panel md:border-3 md:aspect-[4/5] md:shadow-hq-lg"
+    :class="{ 'cursor-zoom-in': zoomOn, 'touch-none': zoomOn && !hasMouse }"
+    :style="cornerBackground"
     data-test="photo-frame"
-    @mouseenter="followPointer"
-    @mousemove="followPointer"
-    @mouseleave="pointerInside = false"
+    @pointerenter="followPointer"
+    @pointermove="followPointer"
+    @pointerleave="pointerInside = false"
   >
     <div
       class="absolute inset-0 transition-transform duration-200 ease-out motion-reduce:transition-none"
       :style="zoomStyle"
       data-test="photo-zoom"
     >
-      <img
-        :src="imageUrl(image, 800)"
-        :srcset="`${imageUrl(image, 600)} 600w, ${imageUrl(image, 1200)} 1200w`"
-        sizes="(min-width: 768px) 50vw, 100vw"
-        :alt="name"
-        width="800"
-        height="1000"
-        class="absolute inset-0 h-full w-full object-cover motion-safe:animate-pop"
-        data-test="product-photo"
-      />
+      <!-- No celular, a foto vem sem a margem de fundo, para a peça não ficar pequena na moldura. -->
+      <picture>
+        <source
+          media="(max-width: 767px)"
+          :srcset="`${imageUrl(image, 600, { trim: true })} 600w, ${imageUrl(image, 1200, { trim: true })} 1200w`"
+          sizes="100vw"
+        />
+        <img
+          :src="imageUrl(image, 800)"
+          :srcset="`${imageUrl(image, 600)} 600w, ${imageUrl(image, 1200)} 1200w`"
+          sizes="(min-width: 768px) 50vw, 100vw"
+          :alt="name"
+          width="800"
+          height="1000"
+          class="absolute inset-0 h-full w-full object-contain motion-safe:animate-pop md:object-cover"
+          data-test="product-photo"
+        />
+      </picture>
       <!-- O dobro do `sizes` da foto principal, porque ela é exibida com zoom 2x. -->
-      <img
-        v-if="wantsHiRes"
-        :srcset="hiResSrcset"
-        sizes="(min-width: 768px) 100vw, 200vw"
-        alt=""
-        decoding="async"
-        class="absolute inset-0 h-full w-full object-cover"
-        :class="hiResLoaded ? 'opacity-100' : 'opacity-0'"
-        data-test="product-photo-hires"
-        @load="hiResLoaded = true"
-      />
+      <picture v-if="wantsHiRes">
+        <source media="(max-width: 767px)" :srcset="hiResSrcset(true)" sizes="200vw" />
+        <img
+          :srcset="hiResSrcset(false)"
+          sizes="100vw"
+          alt=""
+          decoding="async"
+          class="absolute inset-0 h-full w-full object-contain md:object-cover"
+          :class="hiResLoaded ? 'opacity-100' : 'opacity-0'"
+          data-test="product-photo-hires"
+          @load="hiResLoaded = true"
+        />
+      </picture>
     </div>
     <span
       class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-dots opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,black)]"
       aria-hidden="true"
     />
     <span
+      v-if="code"
       class="absolute left-3 top-3 rounded-chip border-2 border-ink bg-white px-2.5 py-1 text-xs font-bold"
     >
       Nº {{ code }}
     </span>
+    <!-- No celular, no canto de cima (embaixo, a peça ocupa a foto); no desktop, embaixo. -->
     <button
-      v-if="canZoom"
+      ref="toggleButton"
       type="button"
-      class="absolute bottom-3 left-3 inline-flex h-11 items-center gap-2 rounded-control border-2.5 border-ink px-3.5 text-sm font-bold shadow-hq-md transition-[transform,box-shadow] duration-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-hq-press focus-ring"
+      class="absolute right-3 top-3 inline-flex md:bottom-3 md:left-3 md:right-auto md:top-auto size-11 items-center justify-center rounded-control border-2.5 border-ink text-sm font-bold shadow-hq-md transition-[transform,box-shadow] duration-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-hq-press focus-ring"
       :class="zoomOn ? 'bg-mustard' : 'bg-white'"
+      aria-label="Ampliar foto"
       :aria-pressed="zoomOn ? 'true' : 'false'"
       data-test="zoom-toggle"
       @click="zoomOn = !zoomOn"
     >
       <svg
-        class="size-4 flex-none"
+        class="size-5 flex-none"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -135,7 +158,7 @@ onBeforeUnmount(() => {
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-4-4" />
       </svg>
-      {{ zoomOn ? 'Sair do zoom' : 'Ampliar' }}
     </button>
+    <slot />
   </div>
 </template>

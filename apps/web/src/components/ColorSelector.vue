@@ -12,11 +12,11 @@ const selectedName = computed(() => props.colors.find((color) => color.id === pr
 const root = ref<HTMLFieldSetElement | null>(null)
 
 // Foca a opção marcada (ou a primeira): dali as setas do teclado já trocam a cor.
-function focus() {
+function focus(options?: { preventScroll?: boolean }) {
   const input =
     root.value?.querySelector<HTMLInputElement>('input:checked') ??
     root.value?.querySelector<HTMLInputElement>('input')
-  input?.focus()
+  input?.focus(options)
 }
 
 defineExpose({ focus })
@@ -25,10 +25,10 @@ defineExpose({ focus })
 <template>
   <fieldset
     ref="root"
-    class="-m-3 rounded-panel border-2.5 border-dashed p-3 transition-colors"
+    class="-m-3 min-w-0 rounded-panel border-2.5 border-dashed p-3 transition-colors"
     :class="pending ? 'border-accent bg-accent-soft' : 'border-transparent'"
   >
-    <legend class="float-left mb-3 flex min-h-6 w-full items-center justify-between gap-2">
+    <legend class="float-left flex min-h-5 w-full items-center gap-2">
       <span class="flex items-center gap-2">
         <span class="text-eyebrow uppercase">Cor</span>
         <PendingTag v-if="pending" />
@@ -37,8 +37,17 @@ defineExpose({ focus })
         {{ selectedName }}
       </span>
     </legend>
-    <div class="clear-left flex flex-wrap gap-3">
-      <label v-for="color in colors" :key="color.id" class="cursor-pointer" :title="color.name">
+    <!-- As cores ficam numa linha só, que rola na horizontal se não couberem. O círculo tem 32 px
+         e o label, 6 px de folga em volta: 44 px de área de toque. O padding do trilho deixa
+         espaço para o anel de seleção, que a rolagem cortaria. O `min-w-0` do fieldset é o que
+         deixa o trilho rolar: sem ele, o fieldset cresce até caber todas as cores. -->
+    <div class="clear-left -m-1.5 flex overflow-x-auto p-1.5">
+      <label
+        v-for="color in colors"
+        :key="color.id"
+        class="flex-none cursor-pointer p-1.5"
+        :title="color.name"
+      >
         <input
           type="radio"
           name="color"
@@ -50,7 +59,7 @@ defineExpose({ focus })
         />
         <span class="sr-only">{{ color.name }}</span>
         <span
-          class="block size-11 rounded-full border-2.5 border-ink shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px hover:scale-105 peer-checked:shadow-ring-accent peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-[7px] peer-focus-visible:outline-ink motion-safe:peer-checked:animate-zap"
+          class="block size-8 rounded-full border-2.5 border-ink shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px hover:scale-105 peer-checked:shadow-ring-accent peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-[7px] peer-focus-visible:outline-ink motion-safe:peer-checked:animate-zap"
           :style="{ backgroundColor: color.hex }"
           aria-hidden="true"
         />

@@ -30,36 +30,37 @@ describe('ProductPhoto: zoom ligado pelo botão', () => {
   it('sem ligar o zoom, passar o mouse não amplia', async () => {
     const wrapper = mountPhoto()
 
-    await frame(wrapper).trigger('mouseenter')
+    await frame(wrapper).trigger('pointerenter')
 
     expect(transform(wrapper)).toBe('none')
     expect(toggle(wrapper).attributes('aria-pressed')).toBe('false')
-    expect(toggle(wrapper).text()).toBe('Ampliar')
+    // Só a lupa aparece; o nome do botão vem do aria-label, e o estado, do aria-pressed.
+    expect(toggle(wrapper).text()).toBe('')
+    expect(toggle(wrapper).attributes('aria-label')).toBe('Ampliar foto')
   })
 
-  it('"Ampliar" liga o zoom, e o hover amplia 2x seguindo o mouse', async () => {
+  it('o botão da lupa liga o zoom, e o hover amplia 2x seguindo o mouse', async () => {
     const wrapper = mountPhoto()
     frame(wrapper).element.getBoundingClientRect = () =>
       ({ left: 100, top: 50, width: 400, height: 500 }) as DOMRect
 
     await toggle(wrapper).trigger('click')
     expect(toggle(wrapper).attributes('aria-pressed')).toBe('true')
-    expect(toggle(wrapper).text()).toBe('Sair do zoom')
     expect(frame(wrapper).classes()).toContain('cursor-zoom-in')
 
-    await frame(wrapper).trigger('mousemove', { clientX: 200, clientY: 425 })
+    await frame(wrapper).trigger('pointermove', { clientX: 200, clientY: 425 })
     expect(transform(wrapper)).toBe('scale(2)')
     const zoomLayer = wrapper.find('[data-test="photo-zoom"]').element as HTMLElement
     expect(zoomLayer.style.transformOrigin).toBe('25% 75%')
 
-    await frame(wrapper).trigger('mouseleave')
+    await frame(wrapper).trigger('pointerleave')
     expect(transform(wrapper)).toBe('none')
   })
 
   it('clicar de novo desliga o zoom e a foto volta ao normal', async () => {
     const wrapper = mountPhoto()
     await toggle(wrapper).trigger('click')
-    await frame(wrapper).trigger('mouseenter')
+    await frame(wrapper).trigger('pointerenter')
 
     await toggle(wrapper).trigger('click')
 
@@ -70,7 +71,7 @@ describe('ProductPhoto: zoom ligado pelo botão', () => {
   it('Esc desliga o zoom, com o foco em qualquer lugar da página', async () => {
     const wrapper = mountPhoto()
     await toggle(wrapper).trigger('click')
-    await frame(wrapper).trigger('mouseenter')
+    await frame(wrapper).trigger('pointerenter')
 
     pressEscape()
     await wrapper.vm.$nextTick()
@@ -81,7 +82,7 @@ describe('ProductPhoto: zoom ligado pelo botão', () => {
 
   it('a versão grande só é pedida depois de ligar o zoom', async () => {
     const wrapper = mountPhoto()
-    await frame(wrapper).trigger('mouseenter')
+    await frame(wrapper).trigger('pointerenter')
     expect(wrapper.find('[data-test="product-photo-hires"]').exists()).toBe(false)
 
     await toggle(wrapper).trigger('click')
@@ -93,12 +94,23 @@ describe('ProductPhoto: zoom ligado pelo botão', () => {
     expect(hiRes.attributes('alt')).toBe('')
   })
 
-  it('no celular (sem mouse), o botão não aparece e o toque não amplia', async () => {
+  it('no celular, o botão também aparece; ligado, a foto já amplia e o dedo escolhe o ponto', async () => {
     const wrapper = mountPhoto({ hasMouse: false })
+    frame(wrapper).element.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 400, height: 250 }) as DOMRect
+    expect(transform(wrapper)).toBe('none')
 
-    await frame(wrapper).trigger('mouseenter')
+    await toggle(wrapper).trigger('click')
+    expect(transform(wrapper)).toBe('scale(2)')
 
-    expect(toggle(wrapper).exists()).toBe(false)
+    await frame(wrapper).trigger('pointermove', { clientX: 100, clientY: 200 })
+    const zoomLayer = wrapper.find('[data-test="photo-zoom"]').element as HTMLElement
+    expect(zoomLayer.style.transformOrigin).toBe('25% 80%')
+
+    // Sem hover no toque: soltar o dedo não desfaz o zoom; só o botão desliga.
+    await frame(wrapper).trigger('pointerleave')
+    expect(transform(wrapper)).toBe('scale(2)')
+    await toggle(wrapper).trigger('click')
     expect(transform(wrapper)).toBe('none')
   })
 
