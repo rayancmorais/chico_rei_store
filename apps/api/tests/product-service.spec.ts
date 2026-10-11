@@ -1,6 +1,6 @@
 import { ProductQuerySchema } from '@chico_rei_store/shared'
 import { buildFilters, listProducts } from '../src/services/product-service'
-import { catalog } from './factories'
+import { branco, catalog, preto, product } from './factories'
 
 const query = (params: Record<string, string> = {}) => ProductQuerySchema.parse(params)
 const ids = (params: Record<string, string>) =>
@@ -9,6 +9,27 @@ const ids = (params: Record<string, string>) =>
 describe('listProducts', () => {
   it('sem filtros, devolve tudo na ordem da vitrine', () => {
     expect(ids({})).toEqual(['1', '2', '3', '4'])
+  })
+
+  it('na relevância, quem tem várias cores e uma foto só vai para o fim, sem mudar o resto', () => {
+    const photo = (id: string) => `https://umapenca.imgix.net/${id}.png`
+    const products = [
+      product({
+        id: 'personalizada',
+        colors: [preto, branco],
+        imagesByColor: { preto: photo('p') },
+      }),
+      product({
+        id: 'troca-de-cor',
+        colors: [preto, branco],
+        imagesByColor: { preto: photo('a'), branco: photo('b') },
+      }),
+      product({ id: 'uma-cor', colors: [preto] }),
+    ]
+
+    const ids = listProducts(products, query()).data.map((p) => p.id)
+
+    expect(ids).toEqual(['troca-de-cor', 'uma-cor', 'personalizada'])
   })
 
   it('combina valores da mesma dimensão com OU', () => {

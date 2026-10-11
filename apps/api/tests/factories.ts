@@ -26,7 +26,15 @@ export function product(overrides: Partial<Product> = {}): Product {
 
 /** Catálogo pequeno com combinações conhecidas de tipo, cor e preço. */
 export const catalog: Product[] = [
-  product({ id: '1', priceCents: 6690, colors: [preto, branco] }),
+  product({
+    id: '1',
+    priceCents: 6690,
+    colors: [preto, branco],
+    imagesByColor: {
+      preto: 'https://umapenca.imgix.net/1/preto.png',
+      branco: 'https://umapenca.imgix.net/1/branco.png',
+    },
+  }),
   product({ id: '2', priceCents: 5090, colors: [vermelho] }),
   product({
     id: '3',

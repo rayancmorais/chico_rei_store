@@ -153,6 +153,8 @@ Na subida, a API valida o seed com o mesmo schema do scraper. Se o arquivo estiv
 
 **Regra dos filtros:** dentro de uma mesma dimensão vale "ou" (camiseta **ou** moletom); entre dimensões vale "e" (camiseta **e** preto). A contagem de cada opção considera os filtros da _outra_ dimensão. Assim, o número ao lado de "Preto" é quantos produtos a pessoa veria se marcasse "Preto" agora, e opções que dariam zero aparecem desabilitadas, em vez de levarem a uma lista vazia.
 
+**Ordem de relevância:** é a ordem da vitrine original, com uma exceção: produtos com várias cores e uma foto só (os modelos "Personalizada", em que a foto não acompanha a cor escolhida) vão para o fim. Assim a loja abre com peças que mostram a cor que a pessoa escolhe; o resto mantém a ordem da vitrine.
+
 As query strings são validadas com Zod e os erros seguem um formato único (`{ error: { code, message } }`).
 
 ### Regra de enriquecimento (dados ausentes no scraping)
