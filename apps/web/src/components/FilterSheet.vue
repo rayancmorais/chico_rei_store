@@ -92,7 +92,6 @@ const { onKeydown } = useModalDialog({
                 :label="type.label"
                 :count="type.count"
                 :pressed="selectedTypes.includes(type.id)"
-                :disabled="type.count === 0 && !selectedTypes.includes(type.id)"
                 @click="emit('toggle-type', type.id)"
               />
             </div>

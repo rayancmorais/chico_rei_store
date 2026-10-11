@@ -37,13 +37,19 @@ const emit = defineEmits<{
       </span>
     </button>
     <template v-if="types.length">
-      <FilterChip label="Tudo" :pressed="selectedTypes.length === 0" @click="emit('clear-types')" />
+      <FilterChip
+        label="Tudo"
+        always-enabled
+        :pressed="selectedTypes.length === 0"
+        @click="emit('clear-types')"
+      />
       <FilterChip
         v-for="type in types"
         :key="type.id"
         :label="type.label"
+        :count="type.count"
+        :show-count="false"
         :pressed="selectedTypes.includes(type.id)"
-        :disabled="type.count === 0 && !selectedTypes.includes(type.id)"
         @click="emit('toggle-type', type.id)"
       />
     </template>
