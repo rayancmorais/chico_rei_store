@@ -2,9 +2,7 @@
 
 Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chico Rei / Uma Penca: listagem com filtros combináveis, página de produto e carrinho lateral, com os produtos coletados de [umapenca.com/loja](https://umapenca.com/loja/) e servidos por uma API própria.
 
-**Deploy:** https://chicoreistore.vercel.app · 
-**Repositório:** https://github.com/rayancmorais/chico_rei_store
-**Design system:** [Figma](https://www.figma.com/design/CN9BQ9cNCII6SXCTjIckSK/Penca-Store-%C2%B7-Design-System?node-id=1-4)
+**Deploy:** https://chicoreistore.vercel.app · **Repositório:** https://github.com/rayancmorais/chico_rei_store **Design system:** [Figma](https://www.figma.com/design/CN9BQ9cNCII6SXCTjIckSK/Penca-Store-%C2%B7-Design-System?node-id=1-4)
 
 <p align="center">
   <img src="docs/screenshots/vitrine.jpg" alt="Página inicial com a vitrine em destaque e os filtros por tipo" width="64%" />
