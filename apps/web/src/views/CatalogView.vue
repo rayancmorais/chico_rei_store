@@ -4,6 +4,7 @@ import type { FiltersResponse, ProductListResponse, ProductSummary } from '@chic
 import { fetchFilters, fetchProducts } from '@/services/api'
 import { isCancelled } from '@/services/http'
 import { useLatestRequest } from '@/composables/useLatestRequest'
+import { useListingReveal } from '@/composables/useListingReveal'
 import { useProductFilters } from '@/composables/useProductFilters'
 import { DEFAULT_SORT, type CatalogQuery } from '@/utils/catalog-query'
 import { pluralize, pluralTypeLabel } from '@/utils/format'
@@ -45,6 +46,7 @@ const totalPages = ref(0)
 const pageSize = ref(0)
 const showFilterSheet = ref(false)
 const results = ref<HTMLElement | null>(null)
+const resultsTitle = ref<HTMLElement | null>(null)
 
 const isRefreshing = computed(() => status.value === 'loading' && products.value.length > 0)
 
@@ -132,16 +134,29 @@ function retry() {
   void loadFilters()
 }
 
+/** Leva a pessoa até a listagem e o foco até o título, para o leitor de tela anunciar a troca. */
+function revealListing() {
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  results.value?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  // Sem `preventScroll`, o foco pularia direto para o título e cortaria a rolagem suave.
+  resultsTitle.value?.focus({ preventScroll: true })
+}
+
 async function shopShirts() {
   updateQuery({ type: ['camiseta'], color: [] })
   await nextTick()
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  results.value?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  revealListing()
 }
 
 watch(query, loadProducts, { immediate: true })
 if (!isDefaultListing(query.value)) void loadHero()
 watch(facetKey, loadFilters, { immediate: true })
+
+// Só rola com a listagem carregada: antes disso, hero e filtros ainda podem mudar de altura.
+const listingSettled = computed(
+  () => status.value !== 'loading' && (filters.value !== null || filtersFailed.value),
+)
+useListingReveal(revealListing, listingSettled)
 </script>
 
 <template>
@@ -177,7 +192,9 @@ watch(facetKey, loadFilters, { immediate: true })
           <component
             :is="showHero ? 'h2' : 'h1'"
             id="results-title"
-            class="font-display text-title-sm md:text-title-md"
+            ref="resultsTitle"
+            tabindex="-1"
+            class="font-display text-title-sm focus:outline-none md:text-title-md"
           >
             {{ resultTitle }}
           </component>
