@@ -15,13 +15,11 @@ interface FetchHtmlOptions {
   retries: number
 
   /** Espera entre tentativas. Injetável para os testes não esperarem de verdade. */
-
   wait?: (ms: number) => Promise<void>
   fetchFn?: typeof fetch
 }
 
 // 4xx (exceto 429) é erro nosso ou página inexistente: repetir não resolve.
-
 const isRetryable = (error: unknown) =>
   !(error instanceof HttpError) || error.status === 429 || error.status >= 500
 

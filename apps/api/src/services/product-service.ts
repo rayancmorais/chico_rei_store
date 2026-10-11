@@ -9,8 +9,7 @@ import type {
 
 type FilterQuery = Pick<ProductQuery, 'type' | 'color'>
 
-/** Vazio = sem filtro nessa dimensão. Dentro da dimensão vale OU; entre dimensões, E. */
-
+// Vazio = sem filtro nessa dimensão. Dentro da dimensão vale OU; entre dimensões, E.
 const matchesTypes = (product: Product, types: string[]) =>
   types.length === 0 || types.includes(product.type.id)
 
@@ -68,7 +67,6 @@ export function listProducts(
  * (e vice-versa), nunca no próprio. Assim a contagem mostra quantos produtos a pessoa
  * veria ao marcar aquela opção, e opções que dariam zero ficam visíveis como zero.
  */
-
 export function buildFilters(products: readonly Product[], query: FilterQuery): FiltersResponse {
   const types = new Map<string, FiltersResponse['types'][number]>()
   const colors = new Map<string, FiltersResponse['colors'][number]>()

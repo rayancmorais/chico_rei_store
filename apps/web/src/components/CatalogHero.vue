@@ -12,9 +12,8 @@ const emit = defineEmits<{ (event: 'shop'): void }>()
 
 const HIGHLIGHTS = ['Artistas independentes', 'Impresso sob demanda', 'Vitrine de umapenca.com']
 
-// Cada quadro tem um selo, uma inclinação no hover e um atraso de entrada próprios. O selo do
-// quadro grande fica sempre visível e diz algo verdadeiro sobre todas as peças (o protótipo
-// dizia "Mais vendida", mas a API não tem dado de vendas); os outros aparecem só no hover.
+// O selo do quadro grande fica sempre visível, então só diz o que vale para todas as peças: a
+// API não tem dado de vendas para sustentar um "Mais vendida". Os outros aparecem só no hover.
 const FRAMES = [
   {
     word: 'Arte autoral',

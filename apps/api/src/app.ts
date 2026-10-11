@@ -21,7 +21,6 @@ export function createApp({ repository, simulation }: AppOptions) {
   })
 
   // O seed é estático: o navegador pode reaproveitar a resposta por 5 minutos.
-
   app.use('/api', (_req, res, next) => {
     res.set('Cache-Control', 'public, max-age=300')
     next()

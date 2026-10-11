@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-// Tokens da direção visual "Ateliê HQ". O contraste de cada cor está no README do design.
+// Tokens da direção visual "Ateliê HQ".
 export default {
   content: ['./index.html', './src/**/*.{vue,ts}'],
   theme: {

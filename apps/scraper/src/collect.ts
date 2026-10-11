@@ -21,7 +21,6 @@ export interface CollectResult {
  * Coleta as páginas em sequência — nunca em paralelo — com intervalo fixo entre elas.
  * Rede e espera chegam por parâmetro, então os testes rodam sem acessar o site.
  */
-
 export async function collectProducts(options: CollectOptions): Promise<CollectResult> {
   const { maxPages, delayMs, pageUrl, fetchPage, wait, log = () => {} } = options
   const byId = new Map<string, RawProduct>()
@@ -36,7 +35,6 @@ export async function collectProducts(options: CollectOptions): Promise<CollectR
     pagesCollected++
 
     // Um produto pode aparecer em duas páginas se o catálogo mudar durante a coleta.
-
     for (const product of products) byId.set(product.sourceId, product)
     log(`página ${page}: ${products.length} produtos (${url})`)
 
