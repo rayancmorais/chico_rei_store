@@ -33,7 +33,10 @@ const {
   changePage,
 } = useProductFilters()
 
-const status = ref<Status>('loading')
+const productsStatus = ref<Status>('loading')
+const filtersFailed = ref(false)
+// As duas buscas são separadas, mas a tela tem um estado só: falhar em qualquer uma é erro.
+const status = computed<Status>(() => (filtersFailed.value ? 'error' : productsStatus.value))
 const products = ref<ProductSummary[]>([])
 const filters = ref<FiltersResponse | null>(null)
 const total = ref(0)
@@ -53,18 +56,19 @@ const resultTitle = computed(() => {
   return pluralTypeLabel(label)
 })
 
-const request = useLatestRequest()
+const productsRequest = useLatestRequest()
+const filtersRequest = useLatestRequest()
 
-async function load() {
-  const signal = request.start()
-  status.value = 'loading'
+// As contagens dos filtros só dependem de tipo e cor: trocar de página ou de ordenação não as muda.
+const facetKey = computed(() => `${query.value.type.join(',')}|${query.value.color.join(',')}`)
+
+async function loadProducts() {
+  const signal = productsRequest.start()
+  productsStatus.value = 'loading'
   const { type, color, page, sort } = query.value
 
   try {
-    const [list, facets] = await Promise.all([
-      fetchProducts({ type, color, page, sort }, signal),
-      fetchFilters({ type, color }, signal),
-    ])
+    const list = await fetchProducts({ type, color, page, sort }, signal)
 
     // Um link compartilhado pode apontar para uma página que deixou de existir (o catálogo mudou):
     // em vez de mostrar uma página vazia, vai para a última que tem produtos.
@@ -77,12 +81,29 @@ async function load() {
     total.value = list.meta.total
     totalPages.value = list.meta.totalPages
     pageSize.value = list.meta.limit
-    filters.value = facets
-    status.value = 'success'
+    productsStatus.value = 'success'
   } catch (error) {
     if (axios.isCancel(error)) return
-    status.value = 'error'
+    productsStatus.value = 'error'
   }
+}
+
+async function loadFilters() {
+  const signal = filtersRequest.start()
+  filtersFailed.value = false
+  const { type, color } = query.value
+
+  try {
+    filters.value = await fetchFilters({ type, color }, signal)
+  } catch (error) {
+    if (axios.isCancel(error)) return
+    filtersFailed.value = true
+  }
+}
+
+function retry() {
+  void loadProducts()
+  void loadFilters()
 }
 
 async function shopShirts() {
@@ -92,7 +113,8 @@ async function shopShirts() {
   results.value?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
 }
 
-watch(query, load, { immediate: true })
+watch(query, loadProducts, { immediate: true })
+watch(facetKey, loadFilters, { immediate: true })
 </script>
 
 <template>
@@ -174,7 +196,7 @@ watch(query, load, { immediate: true })
         description="Pode ser a conexão. Seus filtros continuam salvos."
         data-test="error"
       >
-        <button type="button" class="btn-hq-accent" data-test="retry" @click="load">
+        <button type="button" class="btn-hq-accent" data-test="retry" @click="retry">
           Tentar de novo
         </button>
       </FeedbackState>

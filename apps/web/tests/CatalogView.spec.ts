@@ -6,7 +6,7 @@ import type { CreateElement } from 'vue'
 import { http, HttpResponse } from 'msw'
 import CatalogView from '@/views/CatalogView.vue'
 import { server } from './setup'
-import { listResponse, productSummary } from './factories'
+import { filtersResponse, listResponse, productSummary } from './factories'
 
 const localVue = createLocalVue()
 localVue.use(PiniaVuePlugin)
@@ -86,6 +86,44 @@ describe('CatalogView', () => {
 
     expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
     expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(2)
+  })
+
+  it('trocar de página ou de ordenação não busca os filtros de novo; trocar a cor busca', async () => {
+    let filterCalls = 0
+    server.use(
+      http.get('*/api/filters', () => {
+        filterCalls++
+        return HttpResponse.json(filtersResponse())
+      }),
+    )
+    const { router } = await mountView('/?type=camiseta')
+    await settle()
+    expect(filterCalls).toBe(1)
+
+    await router.push('/?type=camiseta&page=2')
+    await settle()
+    await router.push('/?type=camiseta&page=2&sort=price_asc')
+    await settle()
+    expect(filterCalls).toBe(1)
+
+    await router.push('/?type=camiseta&color=preto')
+    await settle()
+    expect(filterCalls).toBe(2)
+  })
+
+  it('falha só nos filtros também mostra o erro, e tentar de novo recupera', async () => {
+    server.use(
+      http.get('*/api/filters', () => HttpResponse.json({}, { status: 500 }), { once: true }),
+    )
+    const { wrapper } = await mountView()
+    await settle()
+    expect(wrapper.find('[data-test="error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="retry"]').trigger('click')
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(1)
   })
 
   it('lê os filtros da URL e repassa para a API', async () => {
