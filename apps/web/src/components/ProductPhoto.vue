@@ -137,7 +137,7 @@ onBeforeUnmount(() => {
     <button
       ref="toggleButton"
       type="button"
-      class="absolute right-3 top-3 inline-flex md:bottom-3 md:left-3 md:right-auto md:top-auto size-11 items-center justify-center rounded-control border-2.5 border-ink text-sm font-bold shadow-hq-md transition-[transform,box-shadow] duration-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-hq-press focus-ring"
+      class="btn-hq-icon absolute right-3 top-3 md:bottom-3 md:left-3 md:right-auto md:top-auto"
       :class="zoomOn ? 'bg-mustard' : 'bg-white'"
       aria-label="Ampliar foto"
       :aria-pressed="zoomOn ? 'true' : 'false'"

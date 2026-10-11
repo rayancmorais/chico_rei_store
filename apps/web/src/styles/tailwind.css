@@ -46,4 +46,11 @@
   .btn-hq-accent {
     @apply btn-hq bg-accent text-surface hover:bg-accent-hover;
   }
+
+  /* Versão só com ícone, sobre a foto: 44 px, o alvo de toque mínimo, com a sombra mais baixa. */
+  .btn-hq-icon {
+    @apply inline-flex size-11 items-center justify-center rounded-control border-2.5 border-ink shadow-hq-md transition-[transform,box-shadow] duration-100;
+    @apply active:translate-x-0.5 active:translate-y-0.5 active:shadow-hq-press;
+    @apply focus-ring;
+  }
 }

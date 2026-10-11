@@ -232,7 +232,7 @@ onBeforeUnmount(() => {
           <router-link
             v-if="!twoColumns"
             :to="{ name: 'catalog' }"
-            class="absolute left-3 top-3 flex size-11 items-center justify-center rounded-control border-2.5 border-ink bg-white text-lg shadow-hq-md transition-[transform,box-shadow] duration-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-hq-press focus-ring"
+            class="btn-hq-icon absolute left-3 top-3 bg-white text-lg"
             aria-label="Voltar para a loja"
             data-test="back-to-store"
           >
