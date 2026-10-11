@@ -51,7 +51,7 @@ const showDetail = ref(false)
         data-test="detail-image"
       />
       <span
-        class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-[length:7px_7px] opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,#000)]"
+        class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-[length:7px_7px] opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,black)]"
         aria-hidden="true"
       />
     </div>

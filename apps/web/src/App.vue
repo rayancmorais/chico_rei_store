@@ -52,8 +52,8 @@ watch(
             v-for="link in NAV_LINKS"
             :key="link.label"
             :to="{ name: 'catalog', query: link.type ? { type: link.type } : {} }"
-            class="rounded-pill px-4 py-2 text-[#5C4C3E] transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
-            :class="{ 'bg-surface text-ink': isActive(link.type) }"
+            class="rounded-pill px-4 py-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
+            :class="isActive(link.type) ? 'bg-surface text-ink' : 'text-muted-strong'"
             :aria-current="isActive(link.type) ? 'page' : undefined"
           >
             {{ link.label }}
@@ -62,7 +62,7 @@ watch(
 
         <button
           type="button"
-          class="flex h-11 items-center gap-2.5 rounded-pill bg-ink pl-4.5 pr-2 text-sm text-surface transition-colors hover:bg-[#43342A] focus-ring"
+          class="flex h-11 items-center gap-2.5 rounded-pill bg-ink pl-4.5 pr-2 text-sm text-surface transition-colors hover:bg-ink-hover focus-ring"
           :aria-label="cartLabel"
           aria-haspopup="dialog"
           data-test="open-cart"

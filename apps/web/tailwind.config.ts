@@ -8,14 +8,14 @@ export default {
       colors: {
         paper: '#EFE7DA',
         surface: '#F7F2E9',
-        ink: '#2A1F17',
-        muted: '#6B5B4D',
+        ink: { DEFAULT: '#2A1F17', soft: '#4A3C30', hover: '#43342A' },
+        muted: { DEFAULT: '#6B5B4D', strong: '#5C4C3E' },
         line: { DEFAULT: '#D9CDB9', strong: '#B8A991' },
-        sand: '#E6DCCB',
+        sand: { DEFAULT: '#E6DCCB', soft: '#EDE4D5' },
         skeleton: '#E0D4C1',
         accent: { DEFAULT: '#A9472A', hover: '#8E3A21', soft: '#FBEDE6' },
         // Mostarda só passa no contraste com texto `ink`.
-        mustard: '#E3A93B',
+        mustard: { DEFAULT: '#E3A93B', soft: '#FBE7B5' },
         success: '#4F5A3A',
         danger: '#B42318',
       },

@@ -23,7 +23,7 @@ const emit = defineEmits<{ (event: 'click'): void }>()
       class="flex w-full flex-col items-center justify-center gap-0.5 rounded-panel border-ink font-bold transition-[transform,box-shadow] duration-100 focus-ring-lg"
       :class="
         state === 'blocked'
-          ? 'h-[62px] cursor-not-allowed border-2.5 border-dashed bg-[#EDE4D5]'
+          ? 'h-[62px] cursor-not-allowed border-2.5 border-dashed bg-sand-soft'
           : [
               'h-[58px] border-3 text-base text-surface shadow-hq hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hq-raised active:translate-x-[3px] active:translate-y-[3px] active:shadow-hq-press',
               state === 'added'
