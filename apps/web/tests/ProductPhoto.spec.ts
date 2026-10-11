@@ -9,7 +9,7 @@ const IMAGE = 'https://umapenca.imgix.net/1/a.png'
 function mountPhoto({ hasMouse = true } = {}) {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: hasMouse, media: query }))
   return mount(ProductPhoto as ComponentOptions<Vue>, {
-    propsData: { image: IMAGE, name: 'Ecobag Teste', code: '123' },
+    propsData: { image: IMAGE, name: 'Ecobag Teste' },
     attachTo: document.body,
   })
 }

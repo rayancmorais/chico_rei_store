@@ -328,7 +328,7 @@ describe('ProductView no celular', () => {
     expect(desktop.wrapper.find('[data-test="about"]').element.tagName).toBe('SECTION')
   })
 
-  it('o "Nº" aparece uma vez só, na linha de informações', async () => {
+  it('o "Nº" aparece uma vez só: no celular na linha de informações, no desktop na faixa', async () => {
     const mobile = await mountView()
     const product = mobile.wrapper.find('[data-test="product"]')
     expect(product.text().match(/Nº/g)).toHaveLength(1)
@@ -337,6 +337,7 @@ describe('ProductView no celular', () => {
 
     const desktop = await mountView('cam-1', { twoColumns: true })
     expect(desktop.wrapper.find('[data-test="product-meta"]').exists()).toBe(false)
+    expect(desktop.wrapper.find('[data-test="product"]').text().match(/Nº/g)).toHaveLength(1)
     expect(desktop.wrapper.find('[data-test="product"]').text()).toContain('Nº cam-1')
   })
 

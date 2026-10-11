@@ -229,7 +229,6 @@ onBeforeUnmount(() => {
         <ProductPhoto
           :image="product.image"
           :name="product.name"
-          :code="twoColumns ? product.id : undefined"
           class="-mx-4 md:mx-0 lg:sticky lg:top-[calc(theme(spacing.header)+1.5rem)] lg:w-[min(calc((100vh-theme(spacing.header)-7rem)*0.8),37.5rem)]"
         >
           <router-link
@@ -267,7 +266,7 @@ onBeforeUnmount(() => {
               <!-- Nome e preço dividem a linha, em no máximo duas linhas. -->
               <div class="flex items-start justify-between gap-3">
                 <h1
-                  class="line-clamp-2 min-w-0 text-balance font-display text-[20px] leading-[1.15] tracking-[-0.02em] md:text-[28px]"
+                  class="min-w-0 text-balance font-display text-[20px] leading-[1.15] tracking-[-0.02em] md:text-[28px]"
                 >
                   {{ product.name }}
                 </h1>

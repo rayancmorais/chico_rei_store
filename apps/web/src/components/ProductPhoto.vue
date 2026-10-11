@@ -3,15 +3,15 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { imageCornerUrl, imageUrl } from '@/utils/image'
 
-// Sem `code`, a etiqueta Nº não aparece (no celular, o número fica na linha de informações).
-const props = defineProps<{ image: string; name: string; code?: string }>()
+const props = defineProps<{ image: string; name: string }>()
 
 const ZOOM = 2
 // As fotos da fonte têm 1800 px de largura: pedir mais ao CDN só aumentaria o arquivo, sem detalhe.
 const ZOOM_SRCSET_WIDTHS = [1200, 1800]
 
 // Com mouse, o zoom ligado amplia ao passar o mouse e segue o cursor. No toque não há hover: ligado,
-// a foto já amplia no centro, e arrastar o dedo escolhe o ponto.
+// a foto já amplia no centro, e arrastar o dedo escolhe o ponto. Por isso, só enquanto ele está
+// ligado, o arrasto sobre a foto (`touch-none`) move o zoom em vez de rolar a página.
 const hasMouse = useMediaQuery('(hover: hover) and (pointer: fine)')
 const toggleButton = ref<HTMLButtonElement | null>(null)
 
@@ -28,10 +28,11 @@ const hiResSrcset = (trim: boolean) =>
     ', ',
   )
 // No celular, a moldura é mais larga que a foto: ela aparece inteira (sem cortar a peça) e a sobra
-// ganha a cor do fundo da própria foto. No desktop, a foto cobre a moldura e isto fica escondido.
-const cornerBackground = computed(() => {
+// ganha a cor do fundo da própria foto. A URL vai numa variável e o fundo só é aplicado abaixo do
+// `md`: no desktop a foto cobre a moldura, e o navegador nem baixa a imagem do canto.
+const cornerVariable = computed(() => {
   const corner = imageCornerUrl(props.image)
-  return corner ? { backgroundImage: `url("${corner}")` } : undefined
+  return corner ? { '--photo-corner': `url("${corner}")` } : undefined
 })
 const zoomStyle = computed(() => ({
   transform: zooming.value ? `scale(${ZOOM})` : 'none',
@@ -79,9 +80,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="relative aspect-[16/10] overflow-hidden bg-cover bg-center border-b-3 border-ink bg-sand md:rounded-panel md:border-3 md:aspect-[4/5] md:shadow-hq-lg"
+    class="relative aspect-[16/10] overflow-hidden bg-cover bg-center max-md:bg-[image:var(--photo-corner)] border-b-3 border-ink bg-sand md:rounded-panel md:border-3 md:aspect-[4/5] md:shadow-hq-lg"
     :class="{ 'cursor-zoom-in': zoomOn, 'touch-none': zoomOn && !hasMouse }"
-    :style="cornerBackground"
+    :style="cornerVariable"
     data-test="photo-frame"
     @pointerenter="followPointer"
     @pointermove="followPointer"
@@ -129,12 +130,6 @@ onBeforeUnmount(() => {
       class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-dots opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,black)]"
       aria-hidden="true"
     />
-    <span
-      v-if="code"
-      class="absolute left-3 top-3 rounded-chip border-2 border-ink bg-white px-2.5 py-1 text-xs font-bold"
-    >
-      Nº {{ code }}
-    </span>
     <!-- No celular, no canto de cima (embaixo, a peça ocupa a foto); no desktop, embaixo. -->
     <button
       ref="toggleButton"
