@@ -3,7 +3,7 @@ import { PiniaVuePlugin } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import VueRouter from 'vue-router'
 import type { CreateElement } from 'vue'
-import { delay, http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw'
 import App from '@/App.vue'
 import CatalogView from '@/views/CatalogView.vue'
 import ProductView from '@/views/ProductView.vue'
@@ -174,9 +174,12 @@ describe('navegação pelo cabeçalho', () => {
 
   it('o pedido não sobra se a pessoa sai do catálogo antes da primeira carga terminar', async () => {
     const { wrapper, router } = await mountApp()
+    // A listagem só responde quando o teste mandar: assim a pessoa sai antes da primeira carga.
+    let releaseList!: () => void
+    const listReleased = new Promise<void>((resolve) => (releaseList = resolve))
     server.use(
       http.get('*/api/products', async () => {
-        await delay(50)
+        await listReleased
         return HttpResponse.json(listResponse([productSummary()]))
       }),
     )
@@ -186,9 +189,9 @@ describe('navegação pelo cabeçalho', () => {
     await settle()
 
     await router.push('/')
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    releaseList()
+    await vi.waitFor(() => expect(wrapper.find('[data-test="product-grid"]').exists()).toBe(true))
 
-    expect(wrapper.find('[data-test="product-grid"]').exists()).toBe(true)
     expect(scrollIntoView).not.toHaveBeenCalled()
     expect(focusedId()).not.toBe('results-title')
     wrapper.destroy()

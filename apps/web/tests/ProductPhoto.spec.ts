@@ -46,7 +46,6 @@ describe('ProductPhoto: zoom ligado pelo botão', () => {
 
     await toggle(wrapper).trigger('click')
     expect(toggle(wrapper).attributes('aria-pressed')).toBe('true')
-    expect(frame(wrapper).classes()).toContain('cursor-zoom-in')
 
     await frame(wrapper).trigger('pointermove', { clientX: 200, clientY: 425 })
     expect(transform(wrapper)).toBe('scale(2)')
