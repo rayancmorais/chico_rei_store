@@ -1,25 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router/composables'
-import { isNavigationFailure, NavigationFailureType } from 'vue-router'
 import axios from 'axios'
-import type { FiltersResponse, ProductSort, ProductSummary } from '@chico_rei_store/shared'
+import type { FiltersResponse, ProductSummary } from '@chico_rei_store/shared'
 import { fetchFilters, fetchProducts } from '@/services/api'
 import { useLatestRequest } from '@/composables/useLatestRequest'
+import { useProductFilters } from '@/composables/useProductFilters'
 import { pluralize, pluralTypeLabel } from '@/utils/format'
-import {
-  parseCatalogQuery,
-  toggleItem,
-  toRouteQuery,
-  type CatalogQuery,
-} from '@/utils/catalog-query'
+import ActiveFilters from '@/components/ActiveFilters.vue'
 import CatalogHero from '@/components/CatalogHero.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import ProductCardSkeleton from '@/components/ProductCardSkeleton.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
-import FilterChip from '@/components/FilterChip.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterSheet from '@/components/FilterSheet.vue'
+import MobileFilterBar from '@/components/MobileFilterBar.vue'
 import PaginationNav from '@/components/PaginationNav.vue'
 
 // Um status só, em vez de booleans soltos, para "carregando e com erro" ser impossível.
@@ -27,12 +21,17 @@ type Status = 'loading' | 'success' | 'error'
 
 const SKELETON_COUNT = 6
 
-const route = useRoute()
-const router = useRouter()
-
-// A URL é a fonte da verdade dos filtros: voltar, recarregar e compartilhar o link funcionam sem
-// nenhum estado extra.
-const query = computed(() => parseCatalogQuery(route.query))
+const {
+  query,
+  activeFilterCount,
+  updateQuery,
+  toggleType,
+  toggleColor,
+  clearTypes,
+  clearFilters,
+  changeSort,
+  changePage,
+} = useProductFilters()
 
 const status = ref<Status>('loading')
 const products = ref<ProductSummary[]>([])
@@ -43,7 +42,6 @@ const pageSize = ref(0)
 const showFilterSheet = ref(false)
 const results = ref<HTMLElement | null>(null)
 
-const activeFilterCount = computed(() => query.value.type.length + query.value.color.length)
 const isRefreshing = computed(() => status.value === 'loading' && products.value.length > 0)
 const showHero = computed(() => query.value.page === 1)
 
@@ -53,28 +51,6 @@ const resultTitle = computed(() => {
   if (selected.length > 1) return 'Seleção'
   const label = filters.value?.types.find((type) => type.id === selected[0])?.label ?? 'Seleção'
   return pluralTypeLabel(label)
-})
-
-const activeChips = computed(() => {
-  const types = filters.value?.types ?? []
-  const colors = filters.value?.colors ?? []
-  return [
-    ...query.value.type.map((id) => ({
-      key: `type-${id}`,
-      label: types.find((type) => type.id === id)?.label ?? id,
-      hex: null,
-      remove: () => toggleType(id),
-    })),
-    ...query.value.color.map((id) => {
-      const color = colors.find((option) => option.id === id)
-      return {
-        key: `color-${id}`,
-        label: color?.name ?? id,
-        hex: color?.hex ?? null,
-        remove: () => toggleColor(id),
-      }
-    }),
-  ]
 })
 
 const request = useLatestRequest()
@@ -90,6 +66,8 @@ async function load() {
       fetchFilters({ type, color }, signal),
     ])
 
+    // Um link compartilhado pode apontar para uma página que deixou de existir (o catálogo mudou):
+    // em vez de mostrar uma página vazia, vai para a última que tem produtos.
     if (list.data.length === 0 && page > list.meta.totalPages && list.meta.totalPages > 0) {
       updateQuery({ page: list.meta.totalPages }, 'replace')
       return
@@ -105,38 +83,6 @@ async function load() {
     if (axios.isCancel(error)) return
     status.value = 'error'
   }
-}
-
-/** Mudar qualquer filtro volta para a página 1; só a paginação informa a página. */
-function updateQuery(patch: Partial<CatalogQuery>, method: 'push' | 'replace' = 'push') {
-  const next = { ...query.value, page: 1, ...patch }
-  router[method]({ query: toRouteQuery(next) }).catch((failure: unknown) => {
-    if (!isNavigationFailure(failure, NavigationFailureType.duplicated)) throw failure
-  })
-}
-
-function toggleType(id: string) {
-  updateQuery({ type: toggleItem(query.value.type, id) })
-}
-
-function toggleColor(id: string) {
-  updateQuery({ color: toggleItem(query.value.color, id) })
-}
-
-function clearTypes() {
-  updateQuery({ type: [] })
-}
-
-function clearFilters() {
-  updateQuery({ type: [], color: [] })
-}
-
-function changeSort(sort: ProductSort) {
-  updateQuery({ sort })
-}
-
-function changePage(page: number) {
-  updateQuery({ page })
 }
 
 async function shopShirts() {
@@ -158,37 +104,15 @@ watch(query, load, { immediate: true })
       @shop="shopShirts"
     />
 
-    <div
-      class="sticky top-[69px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink bg-paper/95 px-4 pb-3 pt-2.5 backdrop-blur [scrollbar-width:none] md:hidden"
-    >
-      <button
-        type="button"
-        class="flex h-11 flex-none items-center gap-1.5 rounded-panel border-2 border-ink bg-mustard px-3.5 text-sm font-semibold shadow-[3px_3px_0_#2A1F17] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        aria-haspopup="dialog"
-        :aria-expanded="showFilterSheet ? 'true' : 'false'"
-        data-test="toggle-filters"
-        @click="showFilterSheet = true"
-      >
-        Filtros
-        <span
-          v-if="activeFilterCount"
-          class="inline-flex h-5 min-w-5 items-center justify-center rounded-pill bg-ink px-1 text-[11px] text-surface"
-        >
-          {{ activeFilterCount }}
-        </span>
-      </button>
-      <template v-if="filters">
-        <FilterChip label="Tudo" :pressed="query.type.length === 0" @click="clearTypes" />
-        <FilterChip
-          v-for="type in filters.types"
-          :key="type.id"
-          :label="type.label"
-          :pressed="query.type.includes(type.id)"
-          :disabled="type.count === 0 && !query.type.includes(type.id)"
-          @click="toggleType(type.id)"
-        />
-      </template>
-    </div>
+    <MobileFilterBar
+      :types="filters ? filters.types : []"
+      :selected-types="query.type"
+      :active-filter-count="activeFilterCount"
+      :sheet-open="showFilterSheet"
+      @open-filters="showFilterSheet = true"
+      @toggle-type="toggleType"
+      @clear-types="clearTypes"
+    />
 
     <FilterPanel
       v-if="filters"
@@ -220,37 +144,15 @@ watch(query, load, { immediate: true })
           </p>
         </div>
 
-        <div v-if="activeChips.length" class="flex flex-wrap items-center gap-1.5">
-          <button
-            v-for="chip in activeChips"
-            :key="chip.key"
-            type="button"
-            class="flex h-[30px] items-center gap-2 rounded-control border-2 border-ink bg-accent pl-2.5 pr-1 text-[13px] font-medium text-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            :aria-label="`Remover filtro ${chip.label}`"
-            @click="chip.remove"
-          >
-            <span
-              v-if="chip.hex"
-              class="h-3 w-3 rounded-pill ring-[1.5px] ring-surface"
-              :style="{ backgroundColor: chip.hex }"
-              aria-hidden="true"
-            />
-            {{ chip.label }}
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded bg-ink text-[11px]"
-              aria-hidden="true"
-              >✕</span
-            >
-          </button>
-          <button
-            type="button"
-            class="ml-1.5 text-[13px] font-semibold underline decoration-2 underline-offset-[3px]"
-            data-test="clear-filters"
-            @click="clearFilters"
-          >
-            Limpar
-          </button>
-        </div>
+        <ActiveFilters
+          :types="filters ? filters.types : []"
+          :colors="filters ? filters.colors : []"
+          :selected-types="query.type"
+          :selected-colors="query.color"
+          @toggle-type="toggleType"
+          @toggle-color="toggleColor"
+          @clear="clearFilters"
+        />
       </div>
 
       <div
