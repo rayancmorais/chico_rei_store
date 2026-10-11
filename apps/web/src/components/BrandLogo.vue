@@ -1,7 +1,22 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router/composables'
+import { opensInThisTab, scrollMotion } from '@/utils/scroll'
+
 // Três quadros de HQ empilhados: "penca" é um monte, como estampas uma sobre a outra.
 const FRAME =
   'absolute size-8 rounded-[5px] border-2 border-ink transition-transform duration-200 ease-[cubic-bezier(.3,1.6,.5,1)]'
+
+const route = useRoute()
+
+// O logo é o início da loja. Já no catálogo, o router não volta ao topo: em `/` ignora a navegação
+// repetida, e com filtro só tira a query, mantendo a rolagem. Vindo de outra tela, o scrollBehavior
+// do router já cuida disso. Ouvido na captura para ler a rota de antes do clique: o `router-link`
+// navega no próprio clique, e a rota já seria o catálogo mesmo vindo de um produto.
+function onClick(event: MouseEvent) {
+  if (route.name === 'catalog' && opensInThisTab(event)) {
+    window.scrollTo({ top: 0, behavior: scrollMotion() })
+  }
+}
 </script>
 
 <template>
@@ -10,6 +25,7 @@ const FRAME =
     class="group flex items-center gap-3 rounded-control focus-ring-lg"
     aria-label="Penca Store, página inicial"
     data-test="brand-logo"
+    @click.native.capture="onClick"
   >
     <span class="relative block size-[42px] flex-none" aria-hidden="true">
       <span
