@@ -84,7 +84,7 @@ npm run dev
 
 Sobe a API em http://localhost:3333 e a loja em **http://localhost:5173**. O Vite repassa as chamadas `/api` para a API, então não é preciso configurar CORS.
 
-Para ver os estados de carregamento e de erro. A simulação (`SIMULATE_LATENCY_MS` e `?__fail=1`) só liga com `NODE_ENV=development`, o padrão do `npm run dev`; com outro valor ela fica desligada, e o deploy na Vercel não tem simulação:
+Para ver os estados de carregamento e de erro. A simulação (`SIMULATE_LATENCY_MS` e `?__fail=1`) só existe no `npm run dev`: o `npm run start` e o deploy na Vercel sobem a API sem ela.
 
 - **Carregamento:** `SIMULATE_LATENCY_MS=1500` no `.env` atrasa todas as respostas da API, e o skeleton fica visível.
 - **Erro na loja:** rode só o front, sem a API (`npm run dev -w @chico_rei_store/web`), e abra http://localhost:5173. Outra forma: com a loja aberta, ative o modo **Offline** na aba Network do DevTools e troque um filtro. Nos dois casos aparece a mensagem de erro com "Tentar de novo", que volta a funcionar quando a API ou a rede voltam.
@@ -171,13 +171,13 @@ A API marca o produto com `enriched: { colors, sizes, description }`, e a págin
 
 Todas são opcionais. Os valores do `.env.example` são os mesmos que o código usa por padrão.
 
-| Variável              | Usada por | Padrão | Para que serve                                                                                       |
-| --------------------- | --------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| `PORT`                | API       | `3333` | Porta da API em desenvolvimento e no `npm run start`                                                 |
-| `SIMULATE_LATENCY_MS` | API       | `0`    | Atraso artificial nas respostas, para ver os estados de carregamento (só com `NODE_ENV=development`) |
-| `VITE_API_URL`        | Web       | `/api` | Endereço base da API. O padrão funciona com o proxy do Vite e no deploy da Vercel.                   |
-| `SCRAPER_MAX_PAGES`   | Scraper   | `5`    | Quantas páginas coletar, com teto de 5                                                               |
-| `SCRAPER_DELAY_MS`    | Scraper   | `5000` | Intervalo entre requisições, com mínimo de 5000 (o `Crawl-delay` do `robots.txt` da fonte)           |
+| Variável              | Usada por | Padrão | Para que serve                                                                             |
+| --------------------- | --------- | ------ | ------------------------------------------------------------------------------------------ |
+| `PORT`                | API       | `3333` | Porta da API em desenvolvimento e no `npm run start`                                       |
+| `SIMULATE_LATENCY_MS` | API       | `0`    | Atraso artificial nas respostas, para ver os estados de carregamento (só no `npm run dev`) |
+| `VITE_API_URL`        | Web       | `/api` | Endereço base da API. O padrão funciona com o proxy do Vite e no deploy da Vercel.         |
+| `SCRAPER_MAX_PAGES`   | Scraper   | `5`    | Quantas páginas coletar, com teto de 5                                                     |
+| `SCRAPER_DELAY_MS`    | Scraper   | `5000` | Intervalo entre requisições, com mínimo de 5000 (o `Crawl-delay` do `robots.txt` da fonte) |
 
 O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando para a raiz).
 
