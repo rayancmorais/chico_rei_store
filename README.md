@@ -4,6 +4,8 @@ Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chi
 
 **Deploy:** https://chicoreistore.vercel.app · **Repositório:** https://github.com/rayancmorais/chico_rei_store
 
+**Design system:** [Figma](https://www.figma.com/design/CN9BQ9cNCII6SXCTjIckSK/Penca-Store-%C2%B7-Design-System?node-id=1-4)
+
 <p align="center">
   <img src="docs/screenshots/catalogo.jpg" alt="Listagem com filtros por tipo e cor" width="64%" />
   <img src="docs/screenshots/produto-mobile.jpg" alt="Página de produto no celular" width="24%" />
@@ -84,11 +86,13 @@ npm run dev
 
 Sobe a API em http://localhost:3333 e a loja em **http://localhost:5173**. O Vite repassa as chamadas `/api` para a API, então não é preciso configurar CORS.
 
-Para ver os estados de carregamento e de erro. A simulação (`SIMULATE_LATENCY_MS` e `?__fail=1`) só existe no `npm run dev`: o `npm run start` e o deploy na Vercel sobem a API sem ela.
+Para ver os estados de carregamento e de erro:
 
 - **Carregamento:** `SIMULATE_LATENCY_MS=1500` no `.env` atrasa todas as respostas da API, e o skeleton fica visível.
 - **Erro na loja:** rode só o front, sem a API (`npm run dev -w @chico_rei_store/web`), e abra http://localhost:5173. Outra forma: com a loja aberta, ative o modo **Offline** na aba Network do DevTools e troque um filtro. Nos dois casos aparece a mensagem de erro com "Tentar de novo", que volta a funcionar quando a API ou a rede voltam.
 - **Erro direto na API:** `?__fail=1` em qualquer rota força um erro 500, por exemplo http://localhost:3333/api/products?__fail=1. A loja não envia esse parâmetro; ele serve para testar a API isoladamente.
+
+A simulação (`SIMULATE_LATENCY_MS` e `?__fail=1`) só existe no `npm run dev`: o `npm run start` e o deploy na Vercel sobem a API sem ela.
 
 ### Build e versão de produção local
 
@@ -208,7 +212,8 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Visual**
 
-- A identidade "Ateliê HQ" (moldura grossa, sombra dura, selos de onomatopeia) foi explorada em protótipos no Claude Design e implementada como _design tokens_ no `tailwind.config.ts`. As cores têm nomes de papel (`ink`, `paper`, `accent`, `mustard`), não de cor. Todos os pares de texto e fundo usados passam no contraste AA da WCAG (4,5:1 ou mais), e o mostarda só recebe texto escuro.
+- A identidade "Ateliê HQ" (moldura grossa, sombra dura, selos de onomatopeia) foi explorada no Claude Design e implementada como _design tokens_ no `tailwind.config.ts`. As cores têm nomes de papel (`ink`, `paper`, `accent`, `mustard`), não de cor. Todos os pares de texto e fundo usados passam no contraste AA da WCAG (4,5:1 ou mais), e o mostarda só recebe texto escuro.
+- Com o código pronto, documentei esse sistema no Figma (link no topo): cores, tipografia e sombras com os mesmos nomes dos tokens, e as peças reais da loja: os componentes `ProductCard`, `FilterChip`, `ColorSwatchButton`, `BurstSeal` e `BrandLogo`, o Botão HQ (classe `.btn-hq` em `tailwind.css`) e o Item do carrinho (dentro do `CartDrawer.vue`). O código é a fonte da verdade e o Figma acompanha o que foi implementado.
 - Cortei do protótipo tudo o que exigiria dados ou regras que não existem: desconto no Pix, parcelamento, frete grátis, "mais vendida", guia de medidas e checkout. A loja só mostra o que a API sabe.
 - O nome Penca Store e o aviso no rodapé evitam que a página pareça um site oficial da marca.
 
