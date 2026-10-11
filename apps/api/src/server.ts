@@ -1,16 +1,5 @@
-import seed from '../../../data/seed.json'
-import { createApp } from './app'
-import { parseApiEnv } from './env'
-import { createProductRepository } from './repositories/product-repository'
+import { startServer } from './start-server'
 
-const env = parseApiEnv(process.env)
-const repository = createProductRepository(seed)
-
-const app = createApp({
-  repository,
-  simulation: env.NODE_ENV === 'development' ? { latencyMs: env.SIMULATE_LATENCY_MS } : undefined,
-})
-
-app.listen(env.PORT, () => {
-  console.log(`API em http://localhost:${env.PORT} (${repository.all().length} produtos)`)
-})
+// Servidor de produção (`npm run start`): nunca tem simulação de rede, seja qual for o .env.
+// A simulação mora só no dev-server.ts, que fica fora do build.
+startServer()
