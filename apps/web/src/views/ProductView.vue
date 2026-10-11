@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import axios from 'axios'
 import type { Product } from '@chico_rei_store/shared'
 import { fetchProduct } from '@/services/api'
+import { HttpError, isCancelled } from '@/services/http'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import AddToCartButton from '@/components/AddToCartButton.vue'
@@ -78,9 +78,8 @@ async function load() {
     if (data.sizes.length === 1) selectedSize.value = data.sizes[0]!
     status.value = 'success'
   } catch (error) {
-    if (axios.isCancel(error)) return
-    status.value =
-      axios.isAxiosError(error) && error.response?.status === 404 ? 'not-found' : 'error'
+    if (isCancelled(error)) return
+    status.value = error instanceof HttpError && error.status === 404 ? 'not-found' : 'error'
   }
 }
 

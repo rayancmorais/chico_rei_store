@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import axios from 'axios'
 import type { FiltersResponse, ProductSummary } from '@chico_rei_store/shared'
 import { fetchFilters, fetchProducts } from '@/services/api'
+import { isCancelled } from '@/services/http'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import { useProductFilters } from '@/composables/useProductFilters'
 import { pluralize, pluralTypeLabel } from '@/utils/format'
@@ -83,7 +83,7 @@ async function loadProducts() {
     pageSize.value = list.meta.limit
     productsStatus.value = 'success'
   } catch (error) {
-    if (axios.isCancel(error)) return
+    if (isCancelled(error)) return
     productsStatus.value = 'error'
   }
 }
@@ -96,7 +96,7 @@ async function loadFilters() {
   try {
     filters.value = await fetchFilters({ type, color }, signal)
   } catch (error) {
-    if (axios.isCancel(error)) return
+    if (isCancelled(error)) return
     filtersFailed.value = true
   }
 }

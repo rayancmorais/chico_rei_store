@@ -3,7 +3,7 @@ import { PiniaVuePlugin } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import VueRouter from 'vue-router'
 import type { CreateElement } from 'vue'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import CatalogView from '@/views/CatalogView.vue'
 import { server } from './setup'
 import { filtersResponse, listResponse, productSummary } from './factories'
@@ -124,6 +124,28 @@ describe('CatalogView', () => {
 
     expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
     expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(1)
+  })
+
+  it('a resposta atrasada de uma busca antiga não sobrescreve a busca nova', async () => {
+    server.use(
+      http.get('*/api/products', async ({ request }) => {
+        const type = new URL(request.url).searchParams.get('type')
+        if (type === 'camiseta') await delay(50)
+        return HttpResponse.json(
+          listResponse([productSummary({ id: type ?? 'todos', name: type ?? 'todos' })]),
+        )
+      }),
+    )
+    const { wrapper, router } = await mountView('/')
+    await settle()
+
+    // A busca de camiseta demora; a de moletom chega antes. A antiga precisa ser cancelada.
+    await router.push('/?type=camiseta')
+    await router.push('/?type=moletom')
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const names = wrapper.findAll('[data-test="product-name"]').wrappers.map((card) => card.text())
+    expect(names).toEqual(['moletom'])
   })
 
   it('lê os filtros da URL e repassa para a API', async () => {
