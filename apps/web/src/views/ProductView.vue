@@ -46,6 +46,12 @@ const sizeSelector = ref<InstanceType<typeof SizeSelector> | null>(null)
 const selectedColor = computed(
   () => product.value?.colors.find((color) => color.id === selectedColorId.value) ?? null,
 )
+// A peça na cor escolhida, quando a fonte tem essa foto; sem cor escolhida (ou sem foto), a capa.
+const photo = computed(() => {
+  if (!product.value) return ''
+  const colorPhoto = selectedColor.value && product.value.imagesByColor[selectedColor.value.id]
+  return colorPhoto || product.value.image
+})
 const needsSize = computed(() => (product.value?.sizes.length ?? 0) > 0)
 const colorPending = computed(() => selectedColor.value === null)
 const sizePending = computed(() => needsSize.value && selectedSize.value === null)
@@ -128,10 +134,13 @@ function pointToMissingChoice() {
 
 function addToCart() {
   if (!product.value || !selectedColor.value) return
-  cart.add(product.value, {
-    color: selectedColor.value,
-    size: needsSize.value ? selectedSize.value : null,
-  })
+  cart.add(
+    { ...product.value, image: photo.value },
+    {
+      color: selectedColor.value,
+      size: needsSize.value ? selectedSize.value : null,
+    },
+  )
   // O carrinho não abre sozinho: quem quer continuar escolhendo não é interrompido nem tem o foco
   // levado para um diálogo que não abriu. O botão vira "Ver carrinho" e o contador do cabeçalho sobe.
   justAdded.value = true
@@ -227,7 +236,7 @@ onBeforeUnmount(() => {
         7rem é o espaço do caminho de navegação acima da foto mais um respiro embaixo, e 37.5rem
         (600 px) é a largura que a coluna da foto já tinha antes desse limite. -->
         <ProductPhoto
-          :image="product.image"
+          :image="photo"
           :name="product.name"
           class="-mx-4 md:mx-0 lg:sticky lg:top-[calc(theme(spacing.header)+1.5rem)] lg:w-[min(calc((100vh-theme(spacing.header)-7rem)*0.8),37.5rem)]"
         >
@@ -296,7 +305,7 @@ onBeforeUnmount(() => {
             />
 
             <ProductBuyPanel
-              :image="product.image"
+              :image="photo"
               :price-cents="product.priceCents"
               :state="buttonState"
               :choice="choiceLine"

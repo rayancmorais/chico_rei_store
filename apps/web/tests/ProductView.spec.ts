@@ -169,6 +169,25 @@ describe('ProductView', () => {
     expect(wrapper.find('[data-test="enriched-note"]').exists()).toBe(true)
   })
 
+  it('a foto troca para a peça na cor escolhida, e o carrinho guarda essa foto', async () => {
+    useProduct({ imagesByColor: { branco: 'https://umapenca.imgix.net/1/peca-branca.png' } })
+    const { wrapper, cart } = await mountView()
+    const photo = () => wrapper.find('[data-test="product-photo"]').attributes('src')
+    const cover = photo()
+
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    expect(photo()).toContain('peca-branca.png')
+
+    // Cor sem foto na fonte: volta para a capa.
+    await wrapper.find('[data-test="color-option-preto"]').trigger('change')
+    expect(photo()).toBe(cover)
+
+    await wrapper.find('[data-test="color-option-branco"]').trigger('change')
+    await wrapper.find('[data-test="size-option-G"]').trigger('change')
+    await addButton(wrapper).trigger('click')
+    expect(cart.items[0]?.image).toBe('https://umapenca.imgix.net/1/peca-branca.png')
+  })
+
   it('mostra só a foto real do produto, sem recortes nem navegação de galeria', async () => {
     const { wrapper } = await mountView()
     const photos = wrapper.find('[data-test="product"]').findAll('[data-test="product-photo"]')

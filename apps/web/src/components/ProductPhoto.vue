@@ -68,12 +68,12 @@ watch(zoomOn, (on) => {
   }
 })
 
-// Abrir um produto relacionado reaproveita este componente: a nova foto grande ainda não carregou.
+// Trocar de cor ou abrir um produto relacionado troca a foto: a nova versão grande ainda não
+// carregou. O zoom continua ligado, para quem compara as cores de perto.
 watch(
   () => props.image,
   () => {
     hiResLoaded.value = false
-    zoomOn.value = false
   },
 )
 
