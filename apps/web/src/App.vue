@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router/composables'
 import { useCartStore } from '@/stores/cart'
+import { NAV_SHORTCUTS } from '@/config/nav-shortcuts'
 import { requestListingReveal } from '@/composables/useListingReveal'
 import { pluralize } from '@/utils/format'
 import { opensInThisTab } from '@/utils/scroll'
@@ -10,13 +11,6 @@ import CartDrawer from '@/components/CartDrawer.vue'
 
 const cart = useCartStore()
 const route = useRoute()
-
-const NAV_LINKS = [
-  { label: 'Loja', type: undefined },
-  { label: 'Camisetas', type: 'camiseta' },
-  { label: 'Moletons', type: 'moletom' },
-  { label: 'Papelaria', type: 'bottons,caderno,ima' },
-] as const
 
 const BADGE_BUMP_MS = 380
 
@@ -55,7 +49,7 @@ watch(
           class="hidden gap-1.5 rounded-pill bg-sand p-1 text-sm md:flex"
         >
           <router-link
-            v-for="link in NAV_LINKS"
+            v-for="link in NAV_SHORTCUTS"
             :key="link.label"
             :to="{ name: 'catalog', query: link.type ? { type: link.type } : {} }"
             class="rounded-pill px-4 py-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
