@@ -231,6 +231,79 @@ describe('CatalogView', () => {
     expect(seals.at(0).text()).toBe('Arte autoral')
   })
 
+  describe('hero estável', () => {
+    const camiseta = productSummary({ id: 'exu', name: 'Camiseta Tridente Exu' })
+    const moletom = productSummary({
+      id: 'canguru',
+      name: 'Moletom Canguru',
+      type: { id: 'moletom', label: 'Moletom' },
+    })
+    const caneca = productSummary({
+      id: 'bh',
+      name: 'Caneca Beagá',
+      type: { id: 'caneca', label: 'Caneca' },
+    })
+
+    /** Sem filtro, a vitrine tem camiseta e moletom; com type=caneca, só a caneca. */
+    function serveCatalog({ unfilteredStatus = 200 } = {}) {
+      const requests: URLSearchParams[] = []
+      server.use(
+        http.get('*/api/products', ({ request }) => {
+          const params = new URL(request.url).searchParams
+          requests.push(params)
+          if (params.get('type') === 'caneca') return HttpResponse.json(listResponse([caneca]))
+          if (unfilteredStatus !== 200) return HttpResponse.json({}, { status: unfilteredStatus })
+          return HttpResponse.json(listResponse([camiseta, moletom], { total: 180 }))
+        }),
+      )
+      return requests
+    }
+
+    const heroText = (wrapper: Awaited<ReturnType<typeof mountView>>['wrapper']) =>
+      wrapper.find('section[aria-labelledby="hero-title"]').text()
+
+    it('não muda quando o filtro muda', async () => {
+      serveCatalog()
+      const { wrapper, router } = await mountView('/')
+      await settle()
+      expect(heroText(wrapper)).toContain('Camiseta Tridente Exu')
+
+      await router.push('/?type=caneca')
+      await settle()
+
+      expect(heroText(wrapper)).toContain('Camiseta Tridente Exu')
+      expect(heroText(wrapper)).toContain('Moletom Canguru')
+      expect(heroText(wrapper)).not.toContain('Caneca Beagá')
+      expect(heroText(wrapper)).toContain('180 produtos')
+    })
+
+    it('só faz a busca extra quando a página abre filtrada', async () => {
+      const unfilteredOpen = serveCatalog()
+      await mountView('/')
+      await settle()
+      expect(unfilteredOpen).toHaveLength(1)
+
+      const filteredOpen = serveCatalog()
+      const { wrapper } = await mountView('/?type=caneca')
+      await settle()
+      expect(filteredOpen).toHaveLength(2)
+      expect(filteredOpen.filter((params) => !params.has('type'))).toHaveLength(1)
+      expect(heroText(wrapper)).toContain('Camiseta Tridente Exu')
+    })
+
+    it('se a busca extra falhar, a listagem aparece normalmente', async () => {
+      serveCatalog({ unfilteredStatus: 500 })
+      const { wrapper } = await mountView('/?type=caneca')
+      await settle()
+
+      expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(1)
+      // Sem a vitrine inteira, o hero usa o que já carregou e não mostra um total que não é da loja.
+      expect(heroText(wrapper)).toContain('Caneca Beagá')
+      expect(heroText(wrapper)).not.toContain('produtos')
+    })
+  })
+
   it('mostra os filtros ativos como etiquetas que removem o filtro ao clicar', async () => {
     const { wrapper, router } = await mountView('/?type=camiseta&color=preto')
     await settle()

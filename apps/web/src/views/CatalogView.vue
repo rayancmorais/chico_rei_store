@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import type { FiltersResponse, ProductSummary } from '@chico_rei_store/shared'
+import type { FiltersResponse, ProductListResponse, ProductSummary } from '@chico_rei_store/shared'
 import { fetchFilters, fetchProducts } from '@/services/api'
 import { isCancelled } from '@/services/http'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import { useProductFilters } from '@/composables/useProductFilters'
+import { DEFAULT_SORT, type CatalogQuery } from '@/utils/catalog-query'
 import { pluralize, pluralTypeLabel } from '@/utils/format'
 import ActiveFilters from '@/components/ActiveFilters.vue'
 import CatalogHero from '@/components/CatalogHero.vue'
@@ -46,6 +47,30 @@ const showFilterSheet = ref(false)
 const results = ref<HTMLElement | null>(null)
 
 const isRefreshing = computed(() => status.value === 'loading' && products.value.length > 0)
+
+// O hero mostra a vitrine inteira, e não a busca atual: assim não muda a cada filtro e o total é
+// sempre o da loja. Aberta sem filtro, a primeira página já serve; aberta filtrada, busca uma vez.
+const heroProducts = ref<ProductSummary[]>([])
+const heroTotal = ref<number>()
+const heroSource = computed(() => (heroProducts.value.length ? heroProducts.value : products.value))
+const heroRequest = useLatestRequest()
+
+const isDefaultListing = ({ type, color, sort, page }: CatalogQuery) =>
+  type.length === 0 && color.length === 0 && sort === DEFAULT_SORT && page === 1
+
+function keepAsHero(list: ProductListResponse) {
+  if (heroProducts.value.length) return
+  heroProducts.value = list.data
+  heroTotal.value = list.meta.total
+}
+
+async function loadHero() {
+  try {
+    keepAsHero(await fetchProducts({}, heroRequest.start()))
+  } catch {
+    // Complementar: sem esta busca, o hero usa os produtos já carregados e a listagem segue normal.
+  }
+}
 const showHero = computed(() => query.value.page === 1)
 
 const resultTitle = computed(() => {
@@ -79,6 +104,7 @@ async function loadProducts() {
 
     products.value = list.data
     total.value = list.meta.total
+    if (isDefaultListing({ type, color, page, sort })) keepAsHero(list)
     totalPages.value = list.meta.totalPages
     pageSize.value = list.meta.limit
     productsStatus.value = 'success'
@@ -114,17 +140,13 @@ async function shopShirts() {
 }
 
 watch(query, loadProducts, { immediate: true })
+if (!isDefaultListing(query.value)) void loadHero()
 watch(facetKey, loadFilters, { immediate: true })
 </script>
 
 <template>
   <main class="mx-auto max-w-7xl px-4 pb-24 md:px-12">
-    <CatalogHero
-      v-if="showHero"
-      :products="products.slice(0, 3)"
-      :total="status === 'success' ? total : undefined"
-      @shop="shopShirts"
-    />
+    <CatalogHero v-if="showHero" :products="heroSource" :total="heroTotal" @shop="shopShirts" />
 
     <MobileFilterBar
       :types="filters ? filters.types : []"
