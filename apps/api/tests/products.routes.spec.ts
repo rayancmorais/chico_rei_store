@@ -71,6 +71,43 @@ describe('rotas da API', () => {
   })
 })
 
+describe('cache das respostas', () => {
+  it('resposta de sucesso pode ficar 5 minutos no cache', async () => {
+    const res = await request(app).get('/api/filters')
+    expect(res.headers['cache-control']).toBe('public, max-age=300')
+  })
+
+  it.each([
+    ['produto inexistente', '/api/products/999'],
+    ['rota inexistente', '/api/nada'],
+    ['parâmetro inválido', '/api/products?page=abc'],
+  ])('erro nunca é guardado em cache: %s', async (_case, url) => {
+    const res = await request(app).get(url)
+    expect(res.status).toBeGreaterThanOrEqual(400)
+    expect(res.headers['cache-control']).toBe('no-store')
+  })
+
+  it('erro inesperado (500) também não é guardado em cache', async () => {
+    const broken = createApp({
+      repository: {
+        all: () => {
+          throw new Error('seed indisponível')
+        },
+        findById: () => undefined,
+      },
+    })
+    // O errorHandler loga o erro inesperado; aqui o log só polui a saída do teste.
+    const silenced = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const res = await request(broken).get('/api/products')
+    silenced.mockRestore()
+
+    expect(res.status).toBe(500)
+    expect(res.body.error.code).toBe('INTERNAL_ERROR')
+    expect(res.headers['cache-control']).toBe('no-store')
+  })
+})
+
 describe('simulação de rede (desenvolvimento)', () => {
   const devApp = createApp({ repository, simulation: { latencyMs: 0 } })
 
