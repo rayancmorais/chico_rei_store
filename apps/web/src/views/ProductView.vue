@@ -108,8 +108,9 @@ function addToCart() {
     color: selectedColor.value,
     size: needsSize.value ? selectedSize.value : null,
   })
+  // O carrinho não abre sozinho: quem quer continuar escolhendo não é interrompido nem tem o foco
+  // levado para um diálogo que não abriu. O botão vira "Ver carrinho" e o contador do cabeçalho sobe.
   justAdded.value = true
-  cart.open()
 }
 
 // Um botão só, que muda de estado: assim o foco volta para ele quando o carrinho fecha.

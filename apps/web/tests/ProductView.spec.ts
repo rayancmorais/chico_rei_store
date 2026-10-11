@@ -107,10 +107,9 @@ describe('ProductView', () => {
     expect(cart.items[0]?.color.id).toBe('branco')
     expect(wrapper.find('[data-test="added"]').attributes('role')).toBe('status')
     expect(addButton(wrapper).text()).toContain('Adicionado')
-    expect(cart.isOpen).toBe(true)
+    expect(cart.isOpen).toBe(false)
 
     // O mesmo botão vira atalho para o carrinho, sem adicionar de novo.
-    cart.close()
     await addButton(wrapper).trigger('click')
     expect(cart.isOpen).toBe(true)
     expect(cart.items[0]?.quantity).toBe(1)
