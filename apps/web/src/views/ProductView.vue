@@ -10,7 +10,7 @@ import ColorSelector from '@/components/ColorSelector.vue'
 import FeedbackState from '@/components/FeedbackState.vue'
 import PriceTag from '@/components/PriceTag.vue'
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton.vue'
-import ProductGallery from '@/components/ProductGallery.vue'
+import ProductPhoto from '@/components/ProductPhoto.vue'
 import RelatedProducts from '@/components/RelatedProducts.vue'
 import SizeSelector from '@/components/SizeSelector.vue'
 
@@ -180,13 +180,20 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
 
     <template v-else-if="product">
       <article
-        class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12"
+        class="grid items-start gap-8 md:grid-cols-[1.1fr_1fr] md:gap-12 lg:grid-cols-[auto_minmax(0,1fr)]"
         data-test="product"
       >
-        <ProductGallery :image="product.image" :name="product.name" :code="product.id" />
+        <!-- No notebook, a foto inteira cabe na tela abaixo do cabeçalho e fica parada enquanto as
+        informações rolam. A largura é limitada pela altura da tela para manter a proporção 4:5. -->
+        <ProductPhoto
+          :image="product.image"
+          :name="product.name"
+          :code="product.id"
+          class="lg:sticky lg:top-[calc(theme(spacing.header)+1.5rem)] lg:w-[min(calc((100vh-theme(spacing.header)-7rem)*0.8),37.5rem)]"
+        />
 
         <div
-          class="flex flex-col overflow-hidden rounded-panel border-3 border-ink bg-surface shadow-hq md:sticky md:top-24 md:shadow-hq-lg"
+          class="flex flex-col overflow-hidden rounded-panel border-3 border-ink bg-surface shadow-hq md:sticky md:top-24 md:shadow-hq-lg lg:static"
         >
           <div
             class="flex items-center justify-between gap-3 border-b-3 border-ink bg-mustard px-5 py-3 md:px-7"
@@ -195,10 +202,10 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
             <span class="text-xs font-semibold">Nº {{ product.id }}</span>
           </div>
 
-          <div class="flex flex-col gap-7 px-5 pb-7 pt-6 md:px-7">
+          <div class="flex flex-col gap-7 px-5 pb-7 pt-6 md:px-7 lg:gap-5 lg:pb-6 lg:pt-5">
             <div class="flex flex-col gap-3">
               <h1
-                class="text-balance font-display text-[32px] leading-[1.06] tracking-[-0.02em] md:text-[40px]"
+                class="text-balance font-display text-[32px] leading-[1.06] tracking-[-0.02em] md:text-[40px] lg:text-[34px]"
               >
                 {{ product.name }}
               </h1>

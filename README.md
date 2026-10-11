@@ -31,7 +31,7 @@ Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chi
 O que dá para fazer na loja:
 
 - **Listagem:** grade com imagem, nome, preço e cores; filtros por tipo e por cor que se combinam; ordenação por preço; paginação. Os filtros ficam na URL, então dá para compartilhar ou recarregar uma busca filtrada. Tem estados de carregamento (skeleton), de lista vazia e de erro com "tentar de novo".
-- **Produto:** rota própria (`/produto/:id`) que funciona por link direto e ao recarregar; galeria; seleção de cor e tamanho. O botão de adicionar fica bloqueado até as escolhas serem feitas e, se clicado, mostra o que falta e leva o foco até lá.
+- **Produto:** rota própria (`/produto/:id`) que funciona por link direto e ao recarregar; foto do produto; seleção de cor e tamanho. O botão de adicionar fica bloqueado até as escolhas serem feitas e, se clicado, mostra o que falta e leva o foco até lá.
 - **Carrinho lateral:** abre a partir de qualquer tela; cada combinação de cor e tamanho é um item separado; altera quantidade, remove item e atualiza o subtotal na hora. O carrinho fica salvo no navegador e sincronizado entre abas.
 
 | Camada                                   | Tecnologias                                                                                                     |
@@ -105,7 +105,7 @@ npm run preview -w @chico_rei_store/web     # terminal 2: front compilado em htt
 ### Qualidade e testes
 
 ```bash
-npm test             # 213 testes unitários e de componentes (API 44, scraper 30, web 139)
+npm test             # 212 testes unitários e de componentes (API 44, scraper 30, web 138)
 npm run typecheck    # TypeScript em todos os pacotes, incluindo os .vue (vue-tsc)
 npm run lint         # ESLint
 ```
@@ -206,8 +206,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Performance**
 
-- Imagens pelo CDN da própria fonte (imgix): a URL pede a largura certa e o formato mais leve que o navegador aceita (AVIF/WebP), com `srcset`, `loading="lazy"` e largura e altura definidas para não deslocar o layout. A imagem de detalhe do card só é baixada no primeiro hover.
-- A galeria do produto mostra "Detalhe da estampa" e "Textura" como recortes da mesma foto feitos pelo CDN, porque a fonte tem uma foto por produto.
+- Imagens pelo CDN da própria fonte (imgix): a URL pede a largura certa e o formato mais leve que o navegador aceita (AVIF/WebP), com `srcset`, `loading="lazy"` e largura e altura definidas para não deslocar o layout.
 - A página de produto é carregada sob demanda (code splitting por rota). O bundle principal fica em ~60 kB gzip de JS e ~7,6 kB de CSS.
 - A API manda `Cache-Control` de 5 minutos, e os assets do build são servidos com cache imutável.
 
@@ -220,7 +219,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Testes**
 
-- 213 testes com Vitest (API 44, scraper 30, web 139): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
+- 212 testes com Vitest (API 44, scraper 30, web 138): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
 - Nos testes, qualquer aviso do Vue vira erro. Isso já pegou props com tipo errado que só apareceriam como um aviso no console.
 
 **Deploy**
@@ -234,7 +233,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 - **Checkout, frete e pagamento:** o enunciado não pede, e um botão "Finalizar compra" que não leva a lugar nenhum seria pior do que não ter. O carrinho diz isso no rodapé.
 - **Estoque por variação:** a fonte não informa estoque, então todas as combinações de cor e tamanho aparecem disponíveis.
 - **Busca por texto:** não está no enunciado. Seria um filtro `q` na API, no mesmo esquema dos outros.
-- **Uma foto por produto:** a fonte tem uma única imagem por produto, então a miniatura do carrinho é a mesma em todas as cores (uma camiseta branca aparece com a foto da preta).
+- **Uma foto por produto:** a fonte tem uma única imagem por produto. A página de produto mostra só essa foto, em vez de recortes automáticos que podiam errar a posição da estampa, e a miniatura do carrinho é a mesma em todas as cores (uma camiseta branca aparece com a foto da preta).
 
 **Faria diferente ou a mais:**
 

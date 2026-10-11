@@ -42,16 +42,13 @@ describe('ProductCard', () => {
     expect(wrapper.find('[data-test="more-colors"]').text()).toBe('+2')
     expect(wrapper.text()).toContain('Disponível em 7 cores')
   })
-})
 
-describe('ProductCard: recorte de detalhe', () => {
-  it('só carrega o recorte depois que o mouse passa pelo card', async () => {
+  it('o hover não carrega outra imagem: o card mostra só a foto do produto', async () => {
     const wrapper = mountCard()
-    expect(wrapper.find('[data-test="detail-image"]').exists()).toBe(false)
 
     await wrapper.trigger('mouseenter')
 
-    expect(wrapper.find('[data-test="detail-image"]').attributes('src')).toContain('fp-z=2.2')
+    expect(wrapper.findAll('img')).toHaveLength(1)
   })
 
   it('o nome do produto é um h3 por padrão, e o nível é configurável', () => {

@@ -146,19 +146,19 @@ describe('ProductView', () => {
     expect(wrapper.find('[data-test="enriched-note"]').exists()).toBe(true)
   })
 
-  it('galeria troca entre a peça inteira e os recortes', async () => {
+  it('mostra só a foto real do produto, sem recortes nem navegação de galeria', async () => {
     const { wrapper } = await mountView()
-    const image = () => wrapper.find('[data-test="gallery-image"]')
-    expect(image().attributes('alt')).toBe('Camiseta Teste')
+    const photos = wrapper.find('[data-test="product"]').findAll('[data-test="product-photo"]')
 
-    await wrapper.find('[data-test="gallery-thumb-1"]').trigger('click')
-    expect(image().attributes('alt')).toBe('Camiseta Teste: detalhe da estampa')
-    expect(image().attributes('src')).toContain('fp-z=2.2')
-    expect(wrapper.find('[data-test="gallery-thumb-1"]').attributes('aria-pressed')).toBe('true')
-
-    await wrapper.find('[data-test="gallery-prev"]').trigger('click')
-    await wrapper.find('[data-test="gallery-prev"]').trigger('click')
-    expect(wrapper.find('[data-test="gallery-position"]').text()).toContain('3 / 3')
+    expect(photos).toHaveLength(1)
+    const photo = photos.at(0)
+    expect(photo.attributes('alt')).toBe('Camiseta Teste')
+    expect(photo.attributes('width')).toBe('800')
+    expect(photo.attributes('height')).toBe('1000')
+    expect(photo.attributes('srcset')).toMatch(/w=600.* 600w, .*w=1200.* 1200w/)
+    expect(photo.attributes('srcset')).not.toContain('fp-')
+    expect(wrapper.find('button[aria-label="Próxima imagem"]').exists()).toBe(false)
+    expect(wrapper.find('[aria-pressed]').exists()).toBe(false)
   })
 
   it('mostra outros produtos do mesmo tipo, sem repetir o atual', async () => {
