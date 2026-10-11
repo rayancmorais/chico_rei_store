@@ -35,7 +35,7 @@ Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chi
 O que dá para fazer na loja:
 
 - **Listagem:** grade com imagem, nome, preço e cores; filtros por tipo e por cor que se combinam; ordenação por preço; paginação. Os filtros ficam na URL, então dá para compartilhar ou recarregar uma busca filtrada. Tem estados de carregamento (skeleton), de lista vazia e de erro com "tentar de novo".
-- **Produto:** rota própria (`/produto/:id`) que funciona por link direto e ao recarregar; foto do produto; seleção de cor e tamanho. O botão de adicionar fica bloqueado até as escolhas serem feitas e, se clicado, mostra o que falta e leva o foco até lá.
+- **Produto:** rota própria (`/produto/:id`) que funciona por link direto e ao recarregar; foto do produto na cor escolhida; seleção de cor e tamanho. O botão de adicionar fica bloqueado até as escolhas serem feitas e, se clicado, mostra o que falta e leva o foco até lá.
 - **Carrinho lateral:** abre a partir de qualquer tela; cada combinação de cor e tamanho é um item separado; altera quantidade, remove item e atualiza o subtotal na hora. O carrinho fica salvo no navegador e sincronizado entre abas.
 
 | Camada                                   | Tecnologias                                                                                                     |
@@ -137,6 +137,7 @@ umapenca.com/loja ──(scraper)──▶ data/seed.json ──(API: valida + e
 - **Limites:** no máximo 5 páginas, só de listagem (a página de cada produto não é aberta), e 5 s entre requisições. O enunciado pede pelo menos 1 s, mas o `robots.txt` da Uma Penca pede `Crawl-delay: 5`, e a coleta segue o mais restritivo. O `.env` pode reduzir as páginas ou aumentar o intervalo, mas nunca passar desses limites. As páginas são pedidas em sequência, com timeout de 10 s, até 2 novas tentativas com espera crescente em falhas de rede, 429 ou 5xx, e um User-Agent que identifica o projeto.
 - A coleta para no limite de 5 páginas, ou antes, se chegar à última página da vitrine ou a uma página vazia. Na coleta atual (11/10/2026, com 5 s entre requisições), a vitrine tinha 278 páginas e a coleta parou no limite: 5 páginas, 180 produtos de 9 tipos.
 - Os preços são convertidos para centavos inteiros (para evitar erro de ponto flutuante), as cores repetidas entre tecidos são unificadas e um produto que aparece em duas páginas é gravado uma vez só.
+- **Fotos por cor:** o JSON traz uma foto da peça para cada tecido e modelo (`images_by_fabric`). O scraper guarda, para cada cor, a do mesmo modelo da foto de capa, para a peça manter o enquadramento ao trocar de cor, e ignora as amostras de tecido. Na coleta atual, 166 dos 180 produtos têm foto em todas as cores; nas cores sem foto, a página mostra a capa.
 - **Nunca há scraping em tempo real:** a loja só fala com a API, e a API só lê o arquivo de seed.
 
 ### API (`apps/api`)
@@ -238,7 +239,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 - **Checkout, frete e pagamento:** o enunciado não pede, e um botão "Finalizar compra" que não leva a lugar nenhum seria pior do que não ter. O carrinho diz isso no rodapé.
 - **Estoque por variação:** a fonte não informa estoque, então todas as combinações de cor e tamanho aparecem disponíveis.
 - **Busca por texto:** não está no enunciado. Seria um filtro `q` na API, no mesmo esquema dos outros.
-- **Uma foto por produto:** a fonte tem uma única imagem por produto. A página de produto mostra só essa foto, em vez de recortes automáticos que podiam errar a posição da estampa, e a miniatura do carrinho é a mesma em todas as cores (uma camiseta branca aparece com a foto da preta).
+- **Foto em todas as cores:** a página e o carrinho mostram a peça na cor escolhida, mas 14 dos 180 produtos não têm foto de todas as cores na fonte; nessas cores, aparece a foto de capa. A loja só usa fotos reais, sem recortes automáticos que poderiam errar a posição da estampa.
 
 **Faria diferente ou a mais:**
 
