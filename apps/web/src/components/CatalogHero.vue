@@ -74,7 +74,12 @@ const frames = computed(() => {
           <p class="max-w-sm text-sm text-ink-soft [text-wrap:balance] md:text-lg">
             Criações de artistas independentes brasileiros, de camisetas a moletons.
           </p>
-          <button type="button" class="btn-hq-accent hidden md:inline-flex" @click="emit('shop')">
+          <button
+            type="button"
+            class="btn-hq-accent hidden md:inline-flex"
+            data-test="hero-shop"
+            @click="emit('shop')"
+          >
             Ver camisetas →
           </button>
         </div>

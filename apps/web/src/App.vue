@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router/composables'
 import { useCartStore } from '@/stores/cart'
+import { requestListingReveal } from '@/composables/useListingReveal'
 import { pluralize } from '@/utils/format'
 import BrandLogo from '@/components/BrandLogo.vue'
 import CartDrawer from '@/components/CartDrawer.vue'
@@ -22,6 +23,12 @@ const cartLabel = computed(() => `Abrir carrinho, ${pluralize(cart.itemCount, 'i
 
 function isActive(type: string | undefined) {
   return route.name === 'catalog' && route.query.type === type
+}
+
+// Cmd/Ctrl+clique abre o link em outra aba: esta aba não navega e não deve rolar.
+function onNavClick(event: MouseEvent) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+  requestListingReveal()
 }
 
 // O selo cresce por um instante quando a quantidade sobe: o retorno visual de "entrou no carrinho".
@@ -55,6 +62,7 @@ watch(
             class="rounded-pill px-4 py-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
             :class="isActive(link.type) ? 'bg-surface text-ink' : 'text-muted-strong'"
             :aria-current="isActive(link.type) ? 'page' : undefined"
+            @click.native="onNavClick"
           >
             {{ link.label }}
           </router-link>
