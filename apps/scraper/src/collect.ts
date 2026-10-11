@@ -1,5 +1,6 @@
 import type { RawProduct } from '@chico_rei_store/shared'
 import { extractInitialData } from './parse'
+import { pluralize } from './pluralize'
 import { SourcePageSchema } from './source-schema'
 import { toRawProducts } from './to-raw-products'
 
@@ -36,7 +37,7 @@ export async function collectProducts(options: CollectOptions): Promise<CollectR
 
     // Um produto pode aparecer em duas páginas se o catálogo mudar durante a coleta.
     for (const product of products) byId.set(product.sourceId, product)
-    log(`página ${page}: ${products.length} produtos (${url})`)
+    log(`página ${page}: ${pluralize(products.length, 'produto', 'produtos')} (${url})`)
 
     if (products.length === 0 || data.products.current_page >= data.products.total_pages) break
   }
