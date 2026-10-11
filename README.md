@@ -7,11 +7,12 @@ Mini loja virtual em **Vue 2.7** feita para o teste técnico de front-end da Chi
 **Design system:** [Figma](https://www.figma.com/design/CN9BQ9cNCII6SXCTjIckSK/Penca-Store-%C2%B7-Design-System?node-id=1-4)
 
 <p align="center">
-  <img src="docs/screenshots/catalogo.jpg" alt="Listagem com filtros por tipo e cor" width="64%" />
-  <img src="docs/screenshots/produto-mobile.jpg" alt="Página de produto no celular" width="24%" />
+  <img src="docs/screenshots/vitrine.jpg" alt="Página inicial com a vitrine em destaque" width="64%" />
+  <img src="docs/screenshots/produto-mobile.jpg" alt="Página de produto no celular, logo depois de adicionar ao carrinho" width="24%" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/carrinho.jpg" alt="Carrinho com duas variações do mesmo produto como itens separados" width="64%" />
+  <img src="docs/screenshots/produto.jpg" alt="Página de produto no desktop, com o card de compra" width="64%" />
+  <img src="docs/screenshots/relacionados-mobile.jpg" alt="Mais do ateliê no celular: outros produtos do mesmo tipo" width="24%" />
 </p>
 
 > Penca Store é um projeto de estudo, sem vínculo oficial com a Chico Rei ou a Uma Penca. As páginas têm `noindex` e o rodapé deixa isso claro para quem visita.
@@ -105,7 +106,7 @@ npm run preview -w @chico_rei_store/web     # terminal 2: front compilado em htt
 ### Qualidade e testes
 
 ```bash
-npm test             # 234 testes unitários e de componentes (API 44, scraper 30, web 160)
+npm test             # 240 testes unitários e de componentes (API 44, scraper 30, web 166)
 npm run typecheck    # TypeScript em todos os pacotes, incluindo os .vue (vue-tsc)
 npm run lint         # ESLint
 ```
@@ -192,7 +193,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 - **Monorepo com npm workspaces:** scraper, API e loja compartilham os mesmos schemas e tipos. Se o formato de um produto muda, o TypeScript aponta todos os lugares afetados.
 - **Camadas na API:** rotas recebem e validam a requisição, o service tem as regras (filtro, ordenação, paginação, contagens), o repository guarda os dados e o adapter faz o enriquecimento. As regras são funções puras, testadas sem subir servidor.
 - **Seed em arquivo, sem banco de dados:** com 180 produtos que só mudam quando o scraper roda, um banco seria complexidade sem ganho. Os dados ficam em memória e a resposta é instantânea. O custo é que, para atualizar os produtos, é preciso recoletar e fazer um novo deploy.
-- **Separação no front:** componentes de interface, estado no Pinia (só o carrinho, que é compartilhado entre telas), acesso a dados em `services/` e regras puras em `utils/` (paginação, formatação de preço, leitura da query, URL de imagem, escolha dos produtos do hero), todas testadas isoladamente.
+- **Separação no front:** componentes de interface, estado no Pinia (só o carrinho, que é compartilhado entre telas), acesso a dados em `services/` e regras puras em `utils/` (paginação, formatação de preço, leitura da query, URL de imagem, escolha dos produtos do hero, rolagem), todas testadas isoladamente.
 - **Composition API nativa da 2.7 (`<script setup>`) com TypeScript**, para ficar perto do Vue 3. A lógica de foco de diálogo modal virou o composable `useModalDialog`, reaproveitado pelo carrinho e pelo painel de filtros do celular.
 
 **Usabilidade e acessibilidade**
@@ -208,7 +209,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 **Performance**
 
 - Imagens pelo CDN da própria fonte (imgix): a URL pede a largura certa e o formato mais leve que o navegador aceita (AVIF/WebP), com `srcset`, `loading="lazy"` e largura e altura definidas para não deslocar o layout.
-- A página de produto é carregada sob demanda (code splitting por rota). O bundle principal fica em ~60 kB gzip de JS e ~7,6 kB de CSS.
+- A página de produto é carregada sob demanda (code splitting por rota). O bundle principal fica em ~60 kB gzip de JS e ~8,2 kB de CSS.
 - A API manda `Cache-Control` de 5 minutos, e os assets do build são servidos com cache imutável.
 
 **Visual**
@@ -220,7 +221,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Testes**
 
-- 234 testes com Vitest (API 44, scraper 30, web 160): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
+- 240 testes com Vitest (API 44, scraper 30, web 166): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
 - Nos testes, qualquer aviso do Vue vira erro. Isso já pegou props com tipo errado que só apareceriam como um aviso no console.
 
 **Deploy**
