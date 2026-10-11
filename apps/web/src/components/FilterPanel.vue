@@ -50,6 +50,7 @@ watch(
     <div class="flex items-center border-b-2 border-ink py-3 pl-3.5 pr-2">
       <FilterChip
         label="Tudo"
+        always-enabled
         :count="allTypesCount"
         :pressed="selectedTypes.length === 0"
         data-test="all-types"
@@ -72,7 +73,6 @@ watch(
             :label="type.label"
             :count="type.count"
             :pressed="selectedTypes.includes(type.id)"
-            :disabled="type.count === 0 && !selectedTypes.includes(type.id)"
             :data-test="`type-${type.id}`"
             @click="emit('toggle-type', type.id)"
           />

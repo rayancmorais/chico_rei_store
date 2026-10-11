@@ -51,7 +51,7 @@ watch(
         data-test="gallery-image"
       />
       <span
-        class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-dots opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,#000)]"
+        class="pointer-events-none absolute bottom-0 right-0 h-[45%] w-[55%] bg-halftone bg-dots opacity-25 mix-blend-multiply [mask-image:linear-gradient(135deg,transparent_35%,black)]"
         aria-hidden="true"
       />
       <span
@@ -106,7 +106,7 @@ watch(
         </span>
         <span
           class="border-t-2.5 border-ink px-2 py-1.5 text-xs font-semibold"
-          :class="i === index ? 'bg-[#FBE7B5]' : 'bg-white'"
+          :class="i === index ? 'bg-mustard-soft' : 'bg-white'"
         >
           {{ view.label }}
         </span>

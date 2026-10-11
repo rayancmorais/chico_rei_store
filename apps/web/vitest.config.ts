@@ -7,7 +7,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       globals: true,
-      setupFiles: ['./tests/setup.ts'],
+      setupFiles: ['./tests/vue-config.ts', './tests/setup.ts'],
       exclude: ['e2e/**', 'node_modules/**'],
     },
   }),

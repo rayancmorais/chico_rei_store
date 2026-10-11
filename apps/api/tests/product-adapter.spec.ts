@@ -29,5 +29,14 @@ describe('toProduct', () => {
       colors: raw.colors,
       sourceUrl: raw.url,
     })
+    expect(product.enriched.colors).toBe(false)
+  })
+
+  it('sem cor na fonte, devolve a cor padrão e marca a cor como gerada', () => {
+    const product = toProduct({ ...raw, colors: [] })
+
+    expect(product.colors).toEqual([{ id: 'cor-unica', name: 'Cor única', hex: '#E6DCCB' }])
+    expect(product.enriched.colors).toBe(true)
+    expect(() => ProductSchema.parse(product)).not.toThrow()
   })
 })

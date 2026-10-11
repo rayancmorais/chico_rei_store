@@ -28,7 +28,7 @@ const FRAME =
         P
       </span>
     </span>
-    <span class="flex flex-col leading-none">
+    <span class="flex flex-col items-center leading-none">
       <span class="whitespace-nowrap font-display text-[17px] md:text-[22px]">Penca Store</span>
       <span class="mt-1 hidden text-[11px] text-muted md:block">armazém de estampas</span>
     </span>

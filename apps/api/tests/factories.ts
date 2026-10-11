@@ -18,7 +18,7 @@ export function product(overrides: Partial<Product> = {}): Product {
     sizes: ['P', 'M', 'G', 'GG', '2GG'],
     models: ['Camiseta Regular'],
     sourceUrl: 'https://umapenca.com/produto-1.html',
-    enriched: { sizes: true, description: true },
+    enriched: { colors: false, sizes: true, description: true },
     ...overrides,
   }
 }

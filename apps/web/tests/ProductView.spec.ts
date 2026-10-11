@@ -133,6 +133,19 @@ describe('ProductView', () => {
     expect(addButton(wrapper).attributes('aria-disabled')).toBeUndefined()
   })
 
+  it('com só a cor padrão e sem tamanho, a cor já vem marcada e o botão fica liberado', async () => {
+    useProduct({
+      colors: [{ id: 'cor-unica', name: 'Cor única', hex: '#E6DCCB' }],
+      sizes: [],
+      enriched: { colors: true, sizes: true, description: true },
+    })
+    const { wrapper } = await mountView()
+
+    expect(wrapper.find('[data-test="color-name"]').text()).toBe('Cor única')
+    expect(addButton(wrapper).attributes('aria-disabled')).toBeUndefined()
+    expect(wrapper.find('[data-test="enriched-note"]').exists()).toBe(true)
+  })
+
   it('galeria troca entre a peça inteira e os recortes', async () => {
     const { wrapper } = await mountView()
     const image = () => wrapper.find('[data-test="gallery-image"]')

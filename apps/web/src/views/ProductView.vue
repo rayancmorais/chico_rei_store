@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import axios from 'axios'
 import type { Product } from '@chico_rei_store/shared'
 import { fetchProduct } from '@/services/api'
+import { HttpError, isCancelled } from '@/services/http'
 import { useCartStore } from '@/stores/cart'
 import { useLatestRequest } from '@/composables/useLatestRequest'
 import AddToCartButton from '@/components/AddToCartButton.vue'
@@ -51,10 +51,10 @@ const buttonState = computed(() => {
   if (!canAddToCart.value) return 'blocked'
   return justAdded.value ? 'added' : 'ready'
 })
-const wasEnriched = computed(
-  () =>
-    product.value !== null && (product.value.enriched.sizes || product.value.enriched.description),
-)
+const wasEnriched = computed(() => {
+  const enriched = product.value?.enriched
+  return Boolean(enriched && (enriched.colors || enriched.sizes || enriched.description))
+})
 
 const highlight = computed(() => ({
   color: triedToAdd.value && colorPending.value,
@@ -78,9 +78,8 @@ async function load() {
     if (data.sizes.length === 1) selectedSize.value = data.sizes[0]!
     status.value = 'success'
   } catch (error) {
-    if (axios.isCancel(error)) return
-    status.value =
-      axios.isAxiosError(error) && error.response?.status === 404 ? 'not-found' : 'error'
+    if (isCancelled(error)) return
+    status.value = error instanceof HttpError && error.status === 404 ? 'not-found' : 'error'
   }
 }
 
@@ -243,8 +242,8 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
               </h2>
               <p class="text-pretty text-sm leading-relaxed">{{ product.description }}</p>
               <p v-if="wasEnriched" class="mt-3 text-xs" data-test="enriched-note">
-                A listagem da loja original não informa tamanhos nem descrição; estes foram gerados
-                para a demonstração.
+                A listagem da loja original não traz todos os dados deste produto; os que faltavam
+                (como tamanhos e descrição) foram gerados para a demonstração.
               </p>
             </section>
 

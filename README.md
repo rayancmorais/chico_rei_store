@@ -32,16 +32,16 @@ O que dá para fazer na loja:
 - **Produto:** rota própria (`/produto/:id`) que funciona por link direto e ao recarregar; galeria; seleção de cor e tamanho. O botão de adicionar fica bloqueado até as escolhas serem feitas e, se clicado, mostra o que falta e leva o foco até lá.
 - **Carrinho lateral:** abre a partir de qualquer tela; cada combinação de cor e tamanho é um item separado; altera quantidade, remove item e atualiza o subtotal na hora. O carrinho fica salvo no navegador e sincronizado entre abas.
 
-| Camada                                   | Tecnologias                                                                                              |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Runtime                                  | Node.js 24 (`.nvmrc`), npm workspaces                                                                    |
-| Front-end (`apps/web`)                   | Vue 2.7.16 (`<script setup>` + TypeScript), Vue Router 3.6, Pinia 2.3, Axios 1, Tailwind CSS 3.4, Vite 5 |
-| API (`apps/api`)                         | Express 5, Helmet 8, Zod 4, tsup (bundle para a Vercel)                                                  |
-| Scraper (`apps/scraper`)                 | `fetch` nativo do Node, Zod 4, tsx                                                                       |
-| Tipos compartilhados (`packages/shared`) | Schemas Zod e tipos usados pela API, pelo scraper e (só os tipos) pelo front                             |
-| Testes                                   | Vitest 2, Vue Test Utils 1, MSW 2, Supertest, jsdom                                                      |
-| Qualidade                                | TypeScript 5.9, ESLint 9, Prettier 3, Husky + lint-staged, commitlint (Conventional Commits)             |
-| Deploy                                   | Vercel (front estático + API como função serverless, no mesmo projeto)                                   |
+| Camada                                   | Tecnologias                                                                                                     |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Runtime                                  | Node.js 24 (`.nvmrc`), npm workspaces                                                                           |
+| Front-end (`apps/web`)                   | Vue 2.7.16 (`<script setup>` + TypeScript), Vue Router 3.6, Pinia 2.3, `fetch` nativo, Tailwind CSS 3.4, Vite 5 |
+| API (`apps/api`)                         | Express 5, Helmet 8, Zod 4, tsup (bundle para a Vercel)                                                         |
+| Scraper (`apps/scraper`)                 | `fetch` nativo do Node, Zod 4, tsx                                                                              |
+| Tipos compartilhados (`packages/shared`) | Schemas Zod e tipos usados pela API, pelo scraper e (só os tipos) pelo front                                    |
+| Testes                                   | Vitest 2, Vue Test Utils 1, MSW 2, Supertest, jsdom                                                             |
+| Qualidade                                | TypeScript 5.9, ESLint 9, Prettier 3, Husky + lint-staged, commitlint (Conventional Commits)                    |
+| Deploy                                   | Vercel (front estático + API como função serverless, no mesmo projeto)                                          |
 
 Estrutura do monorepo:
 
@@ -84,7 +84,7 @@ npm run dev
 
 Sobe a API em http://localhost:3333 e a loja em **http://localhost:5173**. O Vite repassa as chamadas `/api` para a API, então não é preciso configurar CORS.
 
-Para ver os estados de carregamento e de erro (só em desenvolvimento):
+Para ver os estados de carregamento e de erro. A simulação (`SIMULATE_LATENCY_MS` e `?__fail=1`) só liga com `NODE_ENV=development`, o padrão do `npm run dev`; com outro valor ela fica desligada, e o deploy na Vercel não tem simulação:
 
 - **Carregamento:** `SIMULATE_LATENCY_MS=1500` no `.env` atrasa todas as respostas da API, e o skeleton fica visível.
 - **Erro na loja:** rode só o front, sem a API (`npm run dev -w @chico_rei_store/web`), e abra http://localhost:5173. Outra forma: com a loja aberta, ative o modo **Offline** na aba Network do DevTools e troque um filtro. Nos dois casos aparece a mensagem de erro com "Tentar de novo", que volta a funcionar quando a API ou a rede voltam.
@@ -101,7 +101,7 @@ npm run preview -w @chico_rei_store/web     # terminal 2: front compilado em htt
 ### Qualidade e testes
 
 ```bash
-npm test             # 168 testes unitários e de componentes (API 34, scraper 30, web 104)
+npm test             # 191 testes unitários e de componentes (API 42, scraper 30, web 119)
 npm run typecheck    # TypeScript em todos os pacotes, incluindo os .vue (vue-tsc)
 npm run lint         # ESLint
 ```
@@ -127,7 +127,7 @@ umapenca.com/loja ──(scraper)──▶ data/seed.json ──(API: valida + e
 - A vitrine da Uma Penca entrega os produtos num JSON embutido no HTML (`window.vueInitialData`). O scraper lê esse JSON em vez de navegar pelo HTML com seletores CSS, porque o JSON muda menos que o layout e já traz cores, tipo, preço e imagem estruturados.
 - O JSON é extraído contando chaves (ignorando chaves dentro de strings), já que o mesmo `<script>` tem outro código depois dele, e é validado com Zod. Se a fonte mudar de formato, a coleta falha com uma mensagem clara, em vez de gravar dados quebrados.
 - **Limites:** no máximo 5 páginas, só de listagem (a página de cada produto não é aberta), e 5 s entre requisições. O enunciado pede pelo menos 1 s, mas o `robots.txt` da Uma Penca pede `Crawl-delay: 5`, e a coleta segue o mais restritivo. O `.env` pode reduzir as páginas ou aumentar o intervalo, mas nunca passar desses limites. As páginas são pedidas em sequência, com timeout de 10 s, até 2 novas tentativas com espera crescente em falhas de rede, 429 ou 5xx, e um User-Agent que identifica o projeto.
-- A coleta para no limite de 5 páginas, ou antes, se chegar à última página da vitrine ou a uma página vazia. Na coleta atual (10/10/2026), a vitrine tinha 278 páginas e a coleta parou no limite: 5 páginas, 180 produtos de 9 tipos.
+- A coleta para no limite de 5 páginas, ou antes, se chegar à última página da vitrine ou a uma página vazia. Na coleta atual (10/10/2026), a vitrine tinha 278 páginas e a coleta parou no limite: 5 páginas, 180 produtos de 9 tipos. Esse seed foi coletado com 1,2 s entre requisições, antes do ajuste para os 5 s pedidos pelo `robots.txt`; coletas novas usam 5 s.
 - Os preços são convertidos para centavos inteiros (para evitar erro de ponto flutuante), as cores repetidas entre tecidos são unificadas e um produto que aparece em duas páginas é gravado uma vez só.
 - **Nunca há scraping em tempo real:** a loja só fala com a API, e a API só lê o arquivo de seed.
 
@@ -156,13 +156,13 @@ A listagem da Uma Penca **não informa tamanhos nem descrição**. O adapter da 
   - Roupa adulta: a grade base `P, M, G, GG` mais de 1 a 3 tamanhos extras, na ordem `2GG, 3GG, 4GG`. A quantidade de extras vem de um hash FNV-1a do id do produto. Não usei `Math.random` porque, a cada reinício da API, os tamanhos mudariam e um carrinho salvo poderia apontar para um tamanho que deixou de existir.
   - As duas grades são as que a própria vitrine usa nos seus filtros (`sizes_adult` e `sizes_child`).
 - **Descrição:** montada a partir de dados reais do produto, como no exemplo "_Camiseta X_, estampa produzida sob demanda pela Uma Penca. Disponível nos modelos Babylook e Regular, nas cores Preto e Branco."
-- **Cores:** não são enriquecidas. Todos os produtos coletados trazem ao menos uma cor (pelos tecidos ou pela cor única do produto).
+- **Cores:** vêm da fonte (pelos tecidos ou pela cor única do produto). Se a fonte não trouxer nenhuma, o adapter usa a cor padrão `Cor única`, um neutro do design, porque sem nenhuma opção de cor o botão de compra nunca liberaria. Na coleta atual, todos os produtos trazem cor.
 
-A API marca o produto com `enriched: { sizes, description }`, e a página de produto avisa que esses dados foram gerados para a demonstração.
+A API marca o produto com `enriched: { colors, sizes, description }`, e a página de produto avisa que esses dados foram gerados para a demonstração.
 
 ### Consumo no front (`apps/web`)
 
-- Todas as chamadas passam por um único módulo (`src/services/api.ts`, com Axios). Os componentes não montam URLs.
+- Todas as chamadas passam por um único módulo (`src/services/api.ts`, com `fetch` nativo e timeout de 10 s). Os componentes não montam URLs.
 - A **URL é a fonte da verdade dos filtros**: marcar um filtro altera a query string, e a tela reage à rota. Isso faz o compartilhar, o recarregar e o voltar do navegador funcionarem sem código extra.
 - Cada nova busca cancela a anterior com `AbortController`, então uma resposta atrasada não sobrescreve um filtro mais novo.
 - O front importa do `packages/shared` **só os tipos** (`import type`), e o Zod não entra no bundle da loja.
@@ -171,13 +171,13 @@ A API marca o produto com `enriched: { sizes, description }`, e a página de pro
 
 Todas são opcionais. Os valores do `.env.example` são os mesmos que o código usa por padrão.
 
-| Variável              | Usada por | Padrão | Para que serve                                                                               |
-| --------------------- | --------- | ------ | -------------------------------------------------------------------------------------------- |
-| `PORT`                | API       | `3333` | Porta da API em desenvolvimento e no `npm run start`                                         |
-| `SIMULATE_LATENCY_MS` | API       | `0`    | Atraso artificial nas respostas, para ver os estados de carregamento (só em desenvolvimento) |
-| `VITE_API_URL`        | Web       | `/api` | Endereço base da API. O padrão funciona com o proxy do Vite e no deploy da Vercel.           |
-| `SCRAPER_MAX_PAGES`   | Scraper   | `5`    | Quantas páginas coletar, com teto de 5                                                       |
-| `SCRAPER_DELAY_MS`    | Scraper   | `5000` | Intervalo entre requisições, com mínimo de 5000 (o `Crawl-delay` do `robots.txt` da fonte)   |
+| Variável              | Usada por | Padrão | Para que serve                                                                                       |
+| --------------------- | --------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `PORT`                | API       | `3333` | Porta da API em desenvolvimento e no `npm run start`                                                 |
+| `SIMULATE_LATENCY_MS` | API       | `0`    | Atraso artificial nas respostas, para ver os estados de carregamento (só com `NODE_ENV=development`) |
+| `VITE_API_URL`        | Web       | `/api` | Endereço base da API. O padrão funciona com o proxy do Vite e no deploy da Vercel.                   |
+| `SCRAPER_MAX_PAGES`   | Scraper   | `5`    | Quantas páginas coletar, com teto de 5                                                               |
+| `SCRAPER_DELAY_MS`    | Scraper   | `5000` | Intervalo entre requisições, com mínimo de 5000 (o `Crawl-delay` do `robots.txt` da fonte)           |
 
 O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando para a raiz).
 
@@ -203,7 +203,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 - Imagens pelo CDN da própria fonte (imgix): a URL pede a largura certa e o formato mais leve que o navegador aceita (AVIF/WebP), com `srcset`, `loading="lazy"` e largura e altura definidas para não deslocar o layout. A imagem de detalhe do card só é baixada no primeiro hover.
 - A galeria do produto mostra "Detalhe da estampa" e "Textura" como recortes da mesma foto feitos pelo CDN, porque a fonte tem uma foto por produto.
-- A página de produto é carregada sob demanda (code splitting por rota). O bundle principal fica em ~78,5 kB gzip de JS e ~7,6 kB de CSS.
+- A página de produto é carregada sob demanda (code splitting por rota). O bundle principal fica em ~60 kB gzip de JS e ~7,6 kB de CSS.
 - A API manda `Cache-Control` de 5 minutos, e os assets do build são servidos com cache imutável.
 
 **Visual**
@@ -214,7 +214,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 
 **Testes**
 
-- 168 testes com Vitest (API 34, scraper 30, web 104): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
+- 191 testes com Vitest (API 42, scraper 30, web 119): regras da API e rotas (Supertest), scraper (com duas páginas reais da vitrine salvas como fixture, sem acessar o site), store e componentes Vue (Vue Test Utils + MSW interceptando as chamadas HTTP).
 - Nos testes, qualquer aviso do Vue vira erro. Isso já pegou props com tipo errado que só apareceriam como um aviso no console.
 
 **Deploy**

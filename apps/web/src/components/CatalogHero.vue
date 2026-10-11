@@ -69,7 +69,7 @@ const frames = computed(() =>
               no tecido!
             </span>
           </h1>
-          <p class="max-w-sm text-sm text-[#4A3C30] [text-wrap:balance] md:text-lg">
+          <p class="max-w-sm text-sm text-ink-soft [text-wrap:balance] md:text-lg">
             Estampas de artistas independentes brasileiros, impressas sob demanda.
           </p>
           <button type="button" class="btn-hq-accent hidden md:inline-flex" @click="emit('shop')">

@@ -3,10 +3,10 @@ import { PiniaVuePlugin } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import VueRouter from 'vue-router'
 import type { CreateElement } from 'vue'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import CatalogView from '@/views/CatalogView.vue'
 import { server } from './setup'
-import { listResponse, productSummary } from './factories'
+import { filtersResponse, listResponse, productSummary } from './factories'
 
 const localVue = createLocalVue()
 localVue.use(PiniaVuePlugin)
@@ -88,6 +88,66 @@ describe('CatalogView', () => {
     expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(2)
   })
 
+  it('trocar de página ou de ordenação não busca os filtros de novo; trocar a cor busca', async () => {
+    let filterCalls = 0
+    server.use(
+      http.get('*/api/filters', () => {
+        filterCalls++
+        return HttpResponse.json(filtersResponse())
+      }),
+    )
+    const { router } = await mountView('/?type=camiseta')
+    await settle()
+    expect(filterCalls).toBe(1)
+
+    await router.push('/?type=camiseta&page=2')
+    await settle()
+    await router.push('/?type=camiseta&page=2&sort=price_asc')
+    await settle()
+    expect(filterCalls).toBe(1)
+
+    await router.push('/?type=camiseta&color=preto')
+    await settle()
+    expect(filterCalls).toBe(2)
+  })
+
+  it('falha só nos filtros também mostra o erro, e tentar de novo recupera', async () => {
+    server.use(
+      http.get('*/api/filters', () => HttpResponse.json({}, { status: 500 }), { once: true }),
+    )
+    const { wrapper } = await mountView()
+    await settle()
+    expect(wrapper.find('[data-test="error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="retry"]').trigger('click')
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="product-card"]')).toHaveLength(1)
+  })
+
+  it('a resposta atrasada de uma busca antiga não sobrescreve a busca nova', async () => {
+    server.use(
+      http.get('*/api/products', async ({ request }) => {
+        const type = new URL(request.url).searchParams.get('type')
+        if (type === 'camiseta') await delay(50)
+        return HttpResponse.json(
+          listResponse([productSummary({ id: type ?? 'todos', name: type ?? 'todos' })]),
+        )
+      }),
+    )
+    const { wrapper, router } = await mountView('/')
+    await settle()
+
+    // A busca de camiseta demora; a de moletom chega antes. A antiga precisa ser cancelada.
+    await router.push('/?type=camiseta')
+    await router.push('/?type=moletom')
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const names = wrapper.findAll('[data-test="product-name"]').wrappers.map((card) => card.text())
+    expect(names).toEqual(['moletom'])
+  })
+
   it('lê os filtros da URL e repassa para a API', async () => {
     const requests = captureProductRequests()
     await mountView('/?type=camiseta&color=branco,preto&page=2&sort=price_asc')
@@ -148,6 +208,18 @@ describe('CatalogView', () => {
     await settle()
     expect(second.wrapper.find('#hero-title').exists()).toBe(false)
     expect(second.wrapper.find('h1').attributes('id')).toBe('results-title')
+  })
+
+  it('o título de cada card fica um nível abaixo do título dos resultados', async () => {
+    const first = await mountView('/')
+    await settle()
+    expect(first.wrapper.find('#results-title').element.tagName).toBe('H2')
+    expect(first.wrapper.find('[data-test="product-name"]').element.tagName).toBe('H3')
+
+    const second = await mountView('/?page=2')
+    await settle()
+    expect(second.wrapper.find('#results-title').element.tagName).toBe('H1')
+    expect(second.wrapper.find('[data-test="product-name"]').element.tagName).toBe('H2')
   })
 
   it('o quadro principal da vitrine tem um selo fixo, sem prometer o que a API não sabe', async () => {

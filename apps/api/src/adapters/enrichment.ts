@@ -1,4 +1,8 @@
-import type { RawProduct } from '@chico_rei_store/shared'
+import type { Color, RawProduct } from '@chico_rei_store/shared'
+
+// Sem nenhuma opção de cor, o botão de compra nunca libera (a cor é obrigatória). O neutro `sand`
+// do design não promete uma cor que o produto talvez não tenha.
+const DEFAULT_COLOR: Color = { id: 'cor-unica', name: 'Cor única', hex: '#E6DCCB' }
 
 // Grades reais da loja, vindas de `filters.sizes_adult` e `filters.sizes_child` da vitrine.
 const CHILD_SIZES = ['2', '4', '6', '8', '10', '12', '14']
@@ -17,6 +21,10 @@ export function fnv1a(input: string): number {
     hash = Math.imul(hash, 0x01000193)
   }
   return hash >>> 0
+}
+
+export function enrichColors(product: RawProduct): Color[] {
+  return product.colors.length ? product.colors : [{ ...DEFAULT_COLOR }]
 }
 
 const isChildClothing = (product: RawProduct) => product.type.id.includes('infantil')

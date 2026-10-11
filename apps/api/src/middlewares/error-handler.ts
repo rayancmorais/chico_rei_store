@@ -16,6 +16,10 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     ? error
     : new ApiError(500, 'INTERNAL_ERROR', 'Erro inesperado no servidor')
 
+  // As respostas de /api saem com max-age de 5 minutos; sem isso, um erro passageiro ficaria no
+  // cache do navegador pelo mesmo tempo. O `notFound` também passa por aqui.
+  res.set('Cache-Control', 'no-store')
+
   const body: ApiErrorBody = {
     error: { code: apiError.code, message: apiError.message, details: apiError.details },
   }
