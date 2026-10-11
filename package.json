@@ -14,7 +14,6 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "test:e2e": "npm run test:e2e -w @chico_rei_store/web",
     "lint": "eslint .",
     "format": "prettier --write .",
     "scrape": "npm run start -w @chico_rei_store/scraper",
