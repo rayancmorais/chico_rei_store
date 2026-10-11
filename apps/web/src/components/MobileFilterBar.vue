@@ -18,11 +18,11 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="sticky top-[69px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink bg-paper/95 px-4 pb-3 pt-2.5 backdrop-blur [scrollbar-width:none] md:hidden"
+    class="sticky top-header z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink bg-paper/95 px-4 pb-3 pt-2.5 backdrop-blur [scrollbar-width:none] md:hidden"
   >
     <button
       type="button"
-      class="flex h-11 flex-none items-center gap-1.5 rounded-panel border-2 border-ink bg-mustard px-3.5 text-sm font-semibold shadow-[3px_3px_0_#2A1F17] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      class="flex h-11 flex-none items-center gap-1.5 rounded-panel border-2 border-ink bg-mustard px-3.5 text-sm font-semibold shadow-hq-md focus-ring"
       aria-haspopup="dialog"
       :aria-expanded="sheetOpen ? 'true' : 'false'"
       data-test="toggle-filters"

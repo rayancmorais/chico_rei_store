@@ -17,11 +17,11 @@
       class="flex flex-col gap-4 rounded-panel border-3 border-ink bg-surface p-6 shadow-hq md:shadow-hq-lg"
       aria-hidden="true"
     >
-      <div class="h-3 w-24 rounded-pill bg-[#E0D4C1]" />
-      <div class="h-10 w-4/5 rounded-pill bg-[#E0D4C1]" />
-      <div class="h-7 w-28 rounded-pill bg-[#E0D4C1]" />
-      <div class="h-24 rounded-panel bg-[#E0D4C1]" />
-      <div class="h-14 rounded-panel bg-[#E0D4C1]" />
+      <div class="h-3 w-24 rounded-pill bg-skeleton" />
+      <div class="h-10 w-4/5 rounded-pill bg-skeleton" />
+      <div class="h-7 w-28 rounded-pill bg-skeleton" />
+      <div class="h-24 rounded-panel bg-skeleton" />
+      <div class="h-14 rounded-panel bg-skeleton" />
     </div>
   </div>
 </template>

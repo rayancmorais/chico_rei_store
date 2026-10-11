@@ -52,7 +52,7 @@ async function removeItem(key: string) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        class="absolute inset-2 flex flex-col overflow-hidden rounded-[10px] border-3 border-ink bg-surface shadow-[-6px_6px_0_#2A1F17] motion-safe:animate-slide-in-right md:inset-y-3 md:left-auto md:right-3 md:w-[440px]"
+        class="absolute inset-2 flex flex-col overflow-hidden rounded-[10px] border-3 border-ink bg-surface shadow-hq-drawer motion-safe:animate-slide-in-right md:inset-y-3 md:left-auto md:right-3 md:w-[440px]"
         data-test="cart-drawer"
       >
         <div
@@ -71,7 +71,7 @@ async function removeItem(key: string) {
           <button
             ref="closeButton"
             type="button"
-            class="flex size-11 items-center justify-center rounded-control border-2.5 border-ink bg-white text-sm shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="flex size-11 items-center justify-center rounded-control border-2.5 border-ink bg-white text-sm shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px focus-ring"
             aria-label="Fechar carrinho"
             data-test="close-cart"
             @click="cart.close()"
@@ -100,7 +100,7 @@ async function removeItem(key: string) {
             <li
               v-for="item in cart.items"
               :key="item.key"
-              class="flex gap-3 rounded-control border-2.5 border-ink bg-white p-2.5 shadow-[3px_3px_0_#2A1F17]"
+              class="flex gap-3 rounded-control border-2.5 border-ink bg-white p-2.5 shadow-hq-md"
               data-test="cart-item"
             >
               <img
@@ -115,7 +115,7 @@ async function removeItem(key: string) {
                   <p class="font-display text-[15px] leading-tight">{{ item.name }}</p>
                   <button
                     type="button"
-                    class="-mr-1 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-[4px] border-2 border-ink text-xs transition-colors hover:bg-accent hover:text-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    class="-mr-1 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-[4px] border-2 border-ink text-xs transition-colors hover:bg-accent hover:text-surface focus-ring"
                     :aria-label="`Remover ${item.name}, ${variantLabel(item)}`"
                     title="Remover"
                     data-test="remove-item"
@@ -136,7 +136,7 @@ async function removeItem(key: string) {
                   >
                     <button
                       type="button"
-                      class="flex h-10 w-11 items-center justify-center border-r-2 border-ink bg-surface transition-colors hover:bg-sand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ink disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-surface"
+                      class="flex h-10 w-11 items-center justify-center border-r-2 border-ink bg-surface transition-colors hover:bg-sand focus-ring-inset disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-surface"
                       :disabled="item.quantity <= 1"
                       aria-label="Diminuir quantidade"
                       data-test="decrease"
@@ -153,7 +153,7 @@ async function removeItem(key: string) {
                     </span>
                     <button
                       type="button"
-                      class="flex h-10 w-11 items-center justify-center border-l-2 border-ink bg-surface transition-colors hover:bg-sand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ink disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-surface"
+                      class="flex h-10 w-11 items-center justify-center border-l-2 border-ink bg-surface transition-colors hover:bg-sand focus-ring-inset disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-surface"
                       :disabled="item.quantity >= MAX_QUANTITY"
                       aria-label="Aumentar quantidade"
                       data-test="increase"

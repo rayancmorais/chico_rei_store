@@ -4,6 +4,8 @@ import type { CartItem } from './cart'
 // A versão na chave deixa mudar o formato do item no futuro sem ler dados no formato antigo.
 export const CART_STORAGE_KEY = 'penca-store:cart:v1'
 
+// Validação à mão, e não com os schemas Zod do `shared`: o front só usa os tipos deles, então o Zod
+// não entra no bundle; importar um schema só para isto passaria a carregá-lo.
 type UnknownRecord = Record<string, unknown>
 
 function isRecord(value: unknown): value is UnknownRecord {

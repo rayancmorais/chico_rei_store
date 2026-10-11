@@ -55,7 +55,7 @@ const { onKeydown } = useModalDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="filter-sheet-title"
-        class="absolute inset-x-2 bottom-2 flex max-h-[88%] flex-col overflow-hidden rounded-[10px] border-3 border-ink bg-surface shadow-[5px_5px_0_#2A1F17] motion-safe:animate-sheet-up"
+        class="absolute inset-x-2 bottom-2 flex max-h-[88%] flex-col overflow-hidden rounded-[10px] border-3 border-ink bg-surface shadow-hq-frame motion-safe:animate-sheet-up"
         data-test="filter-sheet"
       >
         <div class="flex items-center justify-between border-b-3 border-ink bg-mustard px-4 py-3.5">
@@ -63,7 +63,7 @@ const { onKeydown } = useModalDialog({
           <button
             ref="closeButton"
             type="button"
-            class="flex h-11 w-11 items-center justify-center rounded-panel border-2 border-ink bg-surface text-lg shadow-hq-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="flex h-11 w-11 items-center justify-center rounded-panel border-2 border-ink bg-surface text-lg shadow-hq-sm focus-ring"
             aria-label="Fechar filtros"
             data-test="close-sheet"
             @click="emit('close')"
@@ -117,7 +117,7 @@ const { onKeydown } = useModalDialog({
         <div class="flex gap-2.5 border-t-3 border-ink bg-paper px-4 pb-4.5 pt-3.5">
           <button
             type="button"
-            class="h-13 rounded-panel border-2 border-ink bg-white px-4.5 text-[15px] font-medium shadow-hq-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            class="h-13 rounded-panel border-2 border-ink bg-white px-4.5 text-[15px] font-medium shadow-hq-sm focus-ring"
             data-test="sheet-clear"
             @click="emit('clear')"
           >

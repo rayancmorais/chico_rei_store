@@ -10,7 +10,6 @@ export interface ProductRepository {
  * Valida o seed uma vez, na subida: se o formato mudar, a API não sobe,
  * em vez de responder dados quebrados.
  */
-
 export function createProductRepository(seed: unknown): ProductRepository {
   const products = SeedSchema.parse(seed).products.map(toProduct)
   const byId = new Map(products.map((product) => [product.id, product]))

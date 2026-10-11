@@ -16,7 +16,6 @@ export function toProduct(raw: RawProduct): Product {
     sourceUrl: raw.url,
 
     // A listagem da fonte nunca traz tamanhos nem descrição, os dois são sempre gerados.
-
     enriched: { sizes: true, description: true },
   }
 }

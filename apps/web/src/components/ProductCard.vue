@@ -25,7 +25,7 @@ const showDetail = ref(false)
 <template>
   <router-link
     :to="{ name: 'product', params: { id: product.id } }"
-    class="group flex h-full flex-col gap-3 rounded-control border-2.5 border-ink bg-surface p-[7px] shadow-hq transition-[transform,box-shadow] duration-200 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hq-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink md:p-3"
+    class="group flex h-full flex-col gap-3 rounded-control border-2.5 border-ink bg-surface p-[7px] shadow-hq transition-[transform,box-shadow] duration-200 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-hq-hover focus-ring-lg md:p-3"
     data-test="product-card"
     @mouseenter.native="showDetail = true"
   >

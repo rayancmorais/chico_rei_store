@@ -1,7 +1,6 @@
 import type { RawProduct } from '@chico_rei_store/shared'
 
-/** Grades reais da loja, vindas de `filters.sizes_adult` e `filters.sizes_child` da vitrine. */
-
+// Grades reais da loja, vindas de `filters.sizes_adult` e `filters.sizes_child` da vitrine.
 const CHILD_SIZES = ['2', '4', '6', '8', '10', '12', '14']
 const ADULT_BASE_SIZES = ['P', 'M', 'G', 'GG']
 const ADULT_EXTRA_SIZES = ['2GG', '3GG', '4GG']
@@ -11,7 +10,6 @@ const ADULT_EXTRA_SIZES = ['2GG', '3GG', '4GG']
  * então o produto recebe os mesmos tamanhos em qualquer máquina e a cada reinício
  * (com Math.random, um carrinho salvo poderia perder o tamanho escolhido).
  */
-
 export function fnv1a(input: string): number {
   let hash = 0x811c9dc5
   for (const char of input) {

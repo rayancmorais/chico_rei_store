@@ -40,18 +40,15 @@ export const ProductSchema = z.object({
   colors: z.array(ColorSchema),
 
   /** Vazio quando o produto não tem tamanho (caneca, ecobag...): o seletor não aparece. */
-
   sizes: z.array(z.string()),
   models: z.array(z.string()),
   sourceUrl: z.string().url(),
 
   /** O que foi gerado pela API, e não veio da fonte. */
-
   enriched: z.object({ sizes: z.boolean(), description: z.boolean() }),
 })
 
 /** Só o que o card da listagem usa: resposta da listagem mais leve. */
-
 export const ProductSummarySchema = ProductSchema.pick({
   id: true,
   name: true,
@@ -95,7 +92,6 @@ export const ProductListResponseSchema = z.object({
 const count = z.number().int()
 
 /** Cada opção traz quantos produtos ela retorna junto com os outros filtros ativos. */
-
 export const FiltersResponseSchema = z.object({
   types: z.array(ProductTypeSchema.extend({ count })),
   colors: z.array(ColorSchema.extend({ count })),

@@ -137,7 +137,7 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
     >
       <router-link
         :to="{ name: 'catalog' }"
-        class="flex h-8 items-center gap-1.5 rounded-control border-2 border-ink bg-white px-3 shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        class="flex h-8 items-center gap-1.5 rounded-control border-2 border-ink bg-white px-3 shadow-hq-sm transition-transform hover:-translate-x-px hover:-translate-y-px focus-ring"
       >
         <span aria-hidden="true">←</span> Loja
       </router-link>

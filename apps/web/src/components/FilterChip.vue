@@ -10,7 +10,7 @@ const emit = defineEmits<{ (event: 'click'): void }>()
 <template>
   <button
     type="button"
-    class="flex h-11 flex-none items-center gap-2 rounded-panel border-2 border-ink pl-3.5 text-sm transition-[transform,box-shadow] duration-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:h-[38px]"
+    class="flex h-11 flex-none items-center gap-2 rounded-panel border-2 border-ink pl-3.5 text-sm transition-[transform,box-shadow] duration-100 focus-ring md:h-[38px]"
     :class="[
       count === undefined ? 'pr-3.5' : 'pr-1.5',
       pressed
