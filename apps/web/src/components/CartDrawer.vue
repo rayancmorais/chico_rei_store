@@ -3,7 +3,7 @@ import { computed, nextTick, ref } from 'vue'
 import { MAX_QUANTITY, useCartStore, type CartItem } from '@/stores/cart'
 import { useModalDialog } from '@/composables/useModalDialog'
 import BurstSeal from '@/components/BurstSeal.vue'
-import { formatPrice } from '@/utils/format'
+import { formatPrice, pluralize } from '@/utils/format'
 import { imageUrl } from '@/utils/image'
 
 const cart = useCartStore()
@@ -18,7 +18,7 @@ const { onKeydown } = useModalDialog({
   onClose: () => cart.close(),
 })
 
-const countLabel = computed(() => `${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'itens'}`)
+const countLabel = computed(() => pluralize(cart.itemCount, 'item', 'itens'))
 
 function variantLabel(item: CartItem) {
   return item.size ? `${item.color.name} · Tamanho ${item.size}` : item.color.name

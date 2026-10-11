@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router/composables'
 import { useCartStore } from '@/stores/cart'
+import { pluralize } from '@/utils/format'
 import CartDrawer from '@/components/CartDrawer.vue'
 
 const cart = useCartStore()
@@ -16,10 +17,7 @@ const NAV_LINKS = [
 
 const BADGE_BUMP_MS = 380
 
-const cartLabel = computed(() => {
-  const count = cart.itemCount
-  return `Abrir carrinho, ${count} ${count === 1 ? 'item' : 'itens'}`
-})
+const cartLabel = computed(() => `Abrir carrinho, ${pluralize(cart.itemCount, 'item', 'itens')}`)
 
 function isActive(type: string | undefined) {
   return route.name === 'catalog' && route.query.type === type

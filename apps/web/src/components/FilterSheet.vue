@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import type { FiltersResponse, ProductSort } from '@chico_rei_store/shared'
 import { useModalDialog } from '@/composables/useModalDialog'
+import { pluralize } from '@/utils/format'
 import FilterChip from '@/components/FilterChip.vue'
 import ColorSwatchButton from '@/components/ColorSwatchButton.vue'
 import SortControl from '@/components/SortControl.vue'
@@ -128,7 +129,7 @@ const { onKeydown } = useModalDialog({
             data-test="sheet-apply"
             @click="emit('close')"
           >
-            Ver {{ total }} {{ total === 1 ? 'produto' : 'produtos' }} →
+            Ver {{ pluralize(total, 'produto', 'produtos') }} →
           </button>
         </div>
       </div>

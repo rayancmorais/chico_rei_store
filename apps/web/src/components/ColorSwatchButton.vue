@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Color } from '@chico_rei_store/shared'
+import { pluralize } from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{ color: Color; count: number; pressed: boolean; size?: 'sm' | 'lg' }>(),
@@ -19,7 +20,7 @@ const isDisabled = computed(() => props.count === 0 && !props.pressed)
     type="button"
     class="flex flex-col items-center gap-1.5 rounded-pill text-[11px] text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink disabled:cursor-not-allowed"
     :title="`${color.name} (${count})`"
-    :aria-label="`${color.name}, ${count} ${count === 1 ? 'produto' : 'produtos'}`"
+    :aria-label="`${color.name}, ${pluralize(count, 'produto', 'produtos')}`"
     :aria-pressed="pressed ? 'true' : 'false'"
     :disabled="isDisabled"
     @click="emit('click')"

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { ProductSummary } from '@chico_rei_store/shared'
-import { formatPrice } from '@/utils/format'
+import { pluralize } from '@/utils/format'
 import { imageUrl } from '@/utils/image'
+import PriceTag from '@/components/PriceTag.vue'
 
 const props = defineProps<{ product: ProductSummary }>()
 
@@ -10,10 +11,9 @@ const MAX_SWATCHES = 5
 
 const visibleColors = computed(() => props.product.colors.slice(0, MAX_SWATCHES))
 const hiddenColorCount = computed(() => props.product.colors.length - visibleColors.value.length)
-const colorsLabel = computed(() => {
-  const count = props.product.colors.length
-  return `Disponível em ${count} ${count === 1 ? 'cor' : 'cores'}`
-})
+const colorsLabel = computed(
+  () => `Disponível em ${pluralize(props.product.colors.length, 'cor', 'cores')}`,
+)
 const srcset = computed(
   () => `${imageUrl(props.product.image, 400)} 400w, ${imageUrl(props.product.image, 800)} 800w`,
 )
@@ -65,19 +65,7 @@ const showDetail = ref(false)
       <div
         class="mt-auto flex flex-wrap items-center justify-between gap-1.5 border-t-2 border-ink pt-2"
       >
-        <p class="text-[15px]" data-test="price">
-          <span
-            v-if="product.originalPriceCents !== null"
-            class="mr-1.5 text-xs text-muted line-through"
-            data-test="original-price"
-          >
-            <span class="sr-only">De</span> {{ formatPrice(product.originalPriceCents) }}
-          </span>
-          <span class="font-semibold">
-            <span v-if="product.originalPriceCents !== null" class="sr-only">por</span>
-            {{ formatPrice(product.priceCents) }}
-          </span>
-        </p>
+        <PriceTag :product="product" />
 
         <div v-if="product.colors.length" class="flex items-center pl-1">
           <span class="sr-only">{{ colorsLabel }}</span>
