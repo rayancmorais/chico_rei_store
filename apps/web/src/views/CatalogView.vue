@@ -232,7 +232,7 @@ watch(facetKey, loadFilters, { immediate: true })
           data-test="product-grid"
         >
           <li v-for="product in products" :key="product.id">
-            <ProductCard :product="product" />
+            <ProductCard :product="product" :heading-level="showHero ? 3 : 2" />
           </li>
         </ul>
         <PaginationNav

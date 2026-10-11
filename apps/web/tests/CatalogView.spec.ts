@@ -188,6 +188,18 @@ describe('CatalogView', () => {
     expect(second.wrapper.find('h1').attributes('id')).toBe('results-title')
   })
 
+  it('o título de cada card fica um nível abaixo do título dos resultados', async () => {
+    const first = await mountView('/')
+    await settle()
+    expect(first.wrapper.find('#results-title').element.tagName).toBe('H2')
+    expect(first.wrapper.find('[data-test="product-name"]').element.tagName).toBe('H3')
+
+    const second = await mountView('/?page=2')
+    await settle()
+    expect(second.wrapper.find('#results-title').element.tagName).toBe('H1')
+    expect(second.wrapper.find('[data-test="product-name"]').element.tagName).toBe('H2')
+  })
+
   it('o quadro principal da vitrine tem um selo fixo, sem prometer o que a API não sabe', async () => {
     const { wrapper } = await mountView('/')
     await settle()

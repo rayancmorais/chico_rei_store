@@ -5,7 +5,11 @@ import { pluralize } from '@/utils/format'
 import { imageUrl } from '@/utils/image'
 import PriceTag from '@/components/PriceTag.vue'
 
-const props = defineProps<{ product: ProductSummary }>()
+// O título do card fica um nível abaixo do título da seção em que ele aparece; quem usa o card
+// sabe qual é esse nível.
+const props = withDefaults(defineProps<{ product: ProductSummary; headingLevel?: 2 | 3 | 4 }>(), {
+  headingLevel: 3,
+})
 
 const MAX_SWATCHES = 5
 
@@ -58,9 +62,13 @@ const showDetail = ref(false)
 
     <div class="flex flex-1 flex-col gap-1 px-1 pb-1">
       <p class="text-xs font-medium text-accent">{{ product.type.label }}</p>
-      <h2 class="line-clamp-2 min-h-[2.4em] font-display text-[15px] leading-tight md:text-lg">
+      <component
+        :is="`h${headingLevel}`"
+        class="line-clamp-2 min-h-[2.4em] font-display text-[15px] leading-tight md:text-lg"
+        data-test="product-name"
+      >
         {{ product.name }}
-      </h2>
+      </component>
 
       <div
         class="mt-auto flex flex-wrap items-center justify-between gap-1.5 border-t-2 border-ink pt-2"

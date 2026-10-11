@@ -4,10 +4,10 @@ import type { ComponentOptions } from 'vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { productSummary } from './factories'
 
-function mountCard(overrides: Parameters<typeof productSummary>[0] = {}) {
+function mountCard(overrides: Parameters<typeof productSummary>[0] = {}, headingLevel?: number) {
   // Os tipos do test-utils 1 não reconhecem componentes de <script setup> com props tipadas.
   return mount(ProductCard as ComponentOptions<Vue>, {
-    propsData: { product: productSummary(overrides) },
+    propsData: { product: productSummary(overrides), headingLevel },
     stubs: { RouterLink: RouterLinkStub },
   })
 }
@@ -52,5 +52,10 @@ describe('ProductCard: recorte de detalhe', () => {
     await wrapper.trigger('mouseenter')
 
     expect(wrapper.find('[data-test="detail-image"]').attributes('src')).toContain('fp-z=2.2')
+  })
+
+  it('o nome do produto é um h3 por padrão, e o nível é configurável', () => {
+    expect(mountCard().find('[data-test="product-name"]').element.tagName).toBe('H3')
+    expect(mountCard({}, 2).find('[data-test="product-name"]').element.tagName).toBe('H2')
   })
 })
