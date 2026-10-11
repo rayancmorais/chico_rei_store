@@ -192,7 +192,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 - **Monorepo com npm workspaces:** scraper, API e loja compartilham os mesmos schemas e tipos. Se o formato de um produto muda, o TypeScript aponta todos os lugares afetados.
 - **Camadas na API:** rotas recebem e validam a requisição, o service tem as regras (filtro, ordenação, paginação, contagens), o repository guarda os dados e o adapter faz o enriquecimento. As regras são funções puras, testadas sem subir servidor.
 - **Seed em arquivo, sem banco de dados:** com 180 produtos que só mudam quando o scraper roda, um banco seria complexidade sem ganho. Os dados ficam em memória e a resposta é instantânea. O custo é que, para atualizar os produtos, é preciso recoletar e fazer um novo deploy.
-- **Separação no front:** componentes de interface, estado no Pinia (só o carrinho, que é compartilhado entre telas), acesso a dados em `services/` e regras puras em `utils/` (paginação, formatação de preço, leitura da query, URL de imagem), todas testadas isoladamente.
+- **Separação no front:** componentes de interface, estado no Pinia (só o carrinho, que é compartilhado entre telas), acesso a dados em `services/` e regras puras em `utils/` (paginação, formatação de preço, leitura da query, URL de imagem, escolha dos produtos do hero), todas testadas isoladamente.
 - **Composition API nativa da 2.7 (`<script setup>`) com TypeScript**, para ficar perto do Vue 3. A lógica de foco de diálogo modal virou o composable `useModalDialog`, reaproveitado pelo carrinho e pelo painel de filtros do celular.
 
 **Usabilidade e acessibilidade**
@@ -201,6 +201,7 @@ O `.env` fica na raiz e é lido pelos três apps (o Vite usa `envDir` apontando 
 - Carrinho e painel de filtros são diálogos modais de verdade: foco preso dentro, `Esc` fecha, o foco volta para quem abriu e a página de trás não rola.
 - No celular, os filtros abrem numa folha de baixo para cima (bottom sheet), com o botão "Ver N produtos" mostrando o total real. No desktop, ficam numa barra fixa no topo.
 - Na barra de tipos do desktop, setas aparecem quando há tipos escondidos à direita, com a quantidade (`+1`), porque mouse de roda não rola na horizontal. A roda não foi convertida em rolagem lateral de propósito: a barra é fixa, e isso travaria a rolagem da página.
+- O hero mostra produtos autorais de tipos diferentes e não muda com os filtros: é a vitrine da loja, não da busca. Se a busca dele falhar, a listagem continua funcionando.
 - Contagem de filtros com zero aparece desabilitada, para não levar a uma lista vazia. Os alvos de toque dos controles principais têm 44px, e as animações respeitam `prefers-reduced-motion`.
 
 **Performance**
