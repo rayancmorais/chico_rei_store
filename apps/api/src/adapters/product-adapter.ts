@@ -1,5 +1,5 @@
 import type { Product, RawProduct } from '@chico_rei_store/shared'
-import { enrichDescription, enrichSizes } from './enrichment'
+import { enrichColors, enrichDescription, enrichSizes } from './enrichment'
 
 export function toProduct(raw: RawProduct): Product {
   return {
@@ -10,12 +10,12 @@ export function toProduct(raw: RawProduct): Product {
     originalPriceCents: raw.originalPriceCents,
     image: raw.image,
     description: enrichDescription(raw),
-    colors: raw.colors,
+    colors: enrichColors(raw),
     sizes: enrichSizes(raw),
     models: raw.models,
     sourceUrl: raw.url,
 
-    // A listagem da fonte nunca traz tamanhos nem descrição, os dois são sempre gerados.
-    enriched: { sizes: true, description: true },
+    // A listagem da fonte nunca traz tamanhos nem descrição; a cor só falta em alguns produtos.
+    enriched: { colors: raw.colors.length === 0, sizes: true, description: true },
   }
 }

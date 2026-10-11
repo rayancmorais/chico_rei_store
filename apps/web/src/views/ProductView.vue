@@ -51,10 +51,10 @@ const buttonState = computed(() => {
   if (!canAddToCart.value) return 'blocked'
   return justAdded.value ? 'added' : 'ready'
 })
-const wasEnriched = computed(
-  () =>
-    product.value !== null && (product.value.enriched.sizes || product.value.enriched.description),
-)
+const wasEnriched = computed(() => {
+  const enriched = product.value?.enriched
+  return Boolean(enriched && (enriched.colors || enriched.sizes || enriched.description))
+})
 
 const highlight = computed(() => ({
   color: triedToAdd.value && colorPending.value,
@@ -243,8 +243,8 @@ onBeforeUnmount(() => clearTimeout(shakeTimer))
               </h2>
               <p class="text-pretty text-sm leading-relaxed">{{ product.description }}</p>
               <p v-if="wasEnriched" class="mt-3 text-xs" data-test="enriched-note">
-                A listagem da loja original não informa tamanhos nem descrição; estes foram gerados
-                para a demonstração.
+                A listagem da loja original não traz todos os dados deste produto; os que faltavam
+                (como tamanhos e descrição) foram gerados para a demonstração.
               </p>
             </section>
 

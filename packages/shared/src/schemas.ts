@@ -45,7 +45,7 @@ export const ProductSchema = z.object({
   sourceUrl: z.string().url(),
 
   /** O que foi gerado pela API, e não veio da fonte. */
-  enriched: z.object({ sizes: z.boolean(), description: z.boolean() }),
+  enriched: z.object({ colors: z.boolean(), sizes: z.boolean(), description: z.boolean() }),
 })
 
 /** Só o que o card da listagem usa: resposta da listagem mais leve. */

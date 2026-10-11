@@ -1,5 +1,5 @@
 import type { RawProduct } from '@chico_rei_store/shared'
-import { enrichDescription, enrichSizes, fnv1a } from '../src/adapters/enrichment'
+import { enrichColors, enrichDescription, enrichSizes, fnv1a } from '../src/adapters/enrichment'
 
 function rawProduct(overrides: Partial<RawProduct> = {}): RawProduct {
   return {
@@ -28,6 +28,19 @@ describe('fnv1a', () => {
 
   it('é determinístico', () => {
     expect(fnv1a('21404')).toBe(fnv1a('21404'))
+  })
+})
+
+describe('enrichColors', () => {
+  it('mantém as cores que vieram da fonte', () => {
+    const product = rawProduct()
+    expect(enrichColors(product)).toBe(product.colors)
+  })
+
+  it('sem cor na fonte, usa a cor padrão neutra', () => {
+    expect(enrichColors(rawProduct({ colors: [] }))).toEqual([
+      { id: 'cor-unica', name: 'Cor única', hex: '#E6DCCB' },
+    ])
   })
 })
 
